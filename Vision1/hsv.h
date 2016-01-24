@@ -3,21 +3,24 @@
 
 #include <opencv2/opencv.hpp>
 #include "timer.h"
+#include "camera.h"
 
-class HSV_Thresholder : public Timable {
+class HSV_Thresholder : public Timable, public Adjustable {
 public:
 	HSV_Thresholder(Timer& timer, bool adjustable);
 
 	void apply(cv::Mat& src, cv::Mat& dst);
 	void operator()(cv::Mat& src, cv::Mat& dst);
 	
-//private:
-	/*static const unsigned int*/ int	_h_min ,
-		_h_max,
-		_s_min ,
-		_s_max,
-		_v_min ,
-		_v_max ;
+	void autoSet(cv::Mat& img);
+	
+	static const unsigned int autoSetRadius=60;
+	
+private:	
+	virtual void adjusted(std::string name,int val);
+	
+	void createUi();
+	
 };
 
 #endif

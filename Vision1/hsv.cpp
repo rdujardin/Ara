@@ -3,39 +3,68 @@
 using namespace std;
 using namespace cv;
 
-HSV_Thresholder::HSV_Thresholder(Timer& timer, bool adjustable) : Timable(timer) {
+HSV_Thresholder::HSV_Thresholder(Timer& timer, bool adjustable) : Timable(timer), Adjustable() {
 
-	/*_h_min = 20;
-	_h_max = 54;
-	_s_min = 28;
-	_s_max = 93;
-	_v_min = 102;
-	_v_max = 247;*/
-	
-	_h_min = 26;
-	_h_max = 84;
-	_s_min = 45;
-	_s_max = 96;
-	_v_min = 41;
-	_v_max = 255;
+	_params["H min"]=24;
+	_params["H max"]=36;
+	_params["S min"]=185;
+	_params["S max"]=255;
+	_params["V min"]=141;
+	_params["V max"]=255;
 	
 	if(adjustable) {
-		createTrackbar("H min","Settings",&_h_min,255);
-		createTrackbar("H max","Settings",&_h_max,255);
-		createTrackbar("S min","Settings",&_s_min,255);
-		createTrackbar("S max","Settings",&_s_max,255);
-		createTrackbar("V min","Settings",&_v_min,255);
-		createTrackbar("V max","Settings",&_v_max,255);
+		createUi();
 	}
 }
 
 void HSV_Thresholder::apply(Mat& src, Mat& dst) {
 	timerStart();
 	cvtColor(src, dst, CV_BGR2HSV);
-	inRange(dst, Scalar(_h_min, _s_min, _v_min), Scalar(_h_max, _s_max, _v_max), dst);
+	inRange(dst, Scalar(_params["H min"],_params["S min"],_params["V min"]), Scalar(_params["H max"], _params["S max"], _params["V max"]), dst);
 	timerStop();
 }
 
 void HSV_Thresholder::operator()(Mat& src, Mat& dst) {
 	apply(src, dst);
 }
+
+void HSV_Thresholder::adjusted(string name,int val) {
+	_params[name]=val;
+}
+
+void HSV_Thresholder::createUi() {
+	makeAdjustable("H min",255);
+	makeAdjustable("H max",255);
+	makeAdjustable("S min",255);
+	makeAdjustable("S max",255);
+	makeAdjustable("V min",255);
+	makeAdjustable("V max",255);
+}
+
+void HSV_Thresholder::autoSet(Mat& img) {
+	
+	Mat hsv(img,Rect(Camera::width/2-autoSetRadius*4/sqrt(2),Camera::height/2-autoSetRadius*4/sqrt(2),autoSetRadius*8/sqrt(2),autoSetRadius*8/sqrt(2)));
+	cvtColor(hsv,hsv,CV_BGR2HSV);
+	
+	vector<Mat> channels;
+	split(hsv,channels);
+	
+	double min,max;
+
+	minMaxIdx(channels[0],&min,&max);
+	_params["H min"]=min;
+	_params["H max"]=max;
+
+	minMaxIdx(channels[1],&min,&max);
+	_params["S min"]=min;
+	_params["S max"]=max;
+	
+	minMaxIdx(channels[2],&min,&max);
+	_params["V min"]=min;
+	_params["V max"]=max;
+	
+	createUi();
+	
+}
+
+

@@ -9,27 +9,40 @@
 #include "hsv.h"
 #include "filters.h"
 #include "hough.h"
+#include "camera.h"
 
 using namespace std;
 using namespace cv;
 
-int main() {
-	VideoCapture cam(CV_CAP_ANY);
-	if (!cam.isOpened()) return -1;
-	
-	cam.set(CV_CAP_PROP_FRAME_WIDTH, 1280);
-	cam.set(CV_CAP_PROP_FRAME_HEIGHT, 960);
-	cam.set(CV_CAP_PROP_FPS, 25);
+enum State {
+	PLACE_BALL=0,
+	RUNNING=1
+};
+
+int main(int argc,char* argv[]) {
+
+	State state=(argc>1)?PLACE_BALL:RUNNING;
 
 	cv::namedWindow("Input", 1);
 	cv::namedWindow("Output", 2);
 	cv::namedWindow("Settings", 3);
+	cv::namedWindow("Hsv", 4);
+	cv::namedWindow("Camera Settings", 5);
+	
+	moveWindow("Input",520,40);
+	moveWindow("Hsv",520,308);
+	moveWindow("Output",520,576);
+	moveWindow("Camera Settings",840,40);
+	moveWindow("Settings",200,40);
+	
+	Camera cam(true);
+	if (!cam.isOpened()) return -1;
 
 	vector<Vec3f> circles;
 
 	Timer timer;
-	HSV_Thresholder hsvThresholder(timer, false);
-	GaussianFilter gaussianFilter(timer);
+	HSV_Thresholder hsvThresholder(timer, true);
+	GaussianFilter gaussianFilter(timer, true);
 	DilateEroder dilateEroder(timer, true);
 	Hough hough(timer,circles);
 	
@@ -44,43 +57,69 @@ int main() {
 		Mat input, output;
 		cam >> input;
 		
-		resize(input,input,Size(320,240));
-
-		hsvThresholder(input, output);
-		gaussianFilter(output);
-		//Mat filtered(output.rows, output.cols,output.type());
-		//bilateralFilter(output, filtered, 5, 150, 150);
-		dilateEroder(output);
-		//hough(output, input);
-
-		//filtered.copyTo(output);
+		Mat resized;
+		resize(input,resized,Size(320,240));
 		
-		findContours(output, contours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
-		Mat ct = Mat::zeros(output.size(), CV_8UC1);
-		for (int i = 0; i < contours.size(); i++) {
-			drawContours(ct, contours, i, Scalar(255, 255, 255), 2);
+		if(state==PLACE_BALL) {
+			circle(resized,Point(160,120),HSV_Thresholder::autoSetRadius,Scalar(0,0,255),4);
+			Mat flipped;
+			flip(resized,flipped,1);
+			
+			imshow("Input",flipped);
+			imshow("Hsv",flipped);
+			imshow("Output",flipped);
+			
+			if(waitKey(30)>=0) {
+				hsvThresholder.autoSet(input);
+				state=RUNNING;
+			}
 		}
 		
-		hough(ct,input);
+		else {
 		
-		unsigned int size=256;
-		Mat test(size,size,CV_8UC1);
-		circle(test,Point(128,128),128,255,-1);
+			gaussianFilter(resized);
+			
+			imshow("Input", resized);
+
+			hsvThresholder(resized, output);
 		
-		imshow("Input", input);
-		imshow("Output", output);
+			imshow("Hsv", output);
+		
+			//Mat filtered(output.rows, output.cols,output.type());
+			//bilateralFilter(output, filtered, 5, 150, 150);
+			dilateEroder(output);
+			//hough(output, input);
 
-		cout << "(" << input.rows << "," << input.cols << ")-(" << output.rows << "," << output.cols << ") # ";
+			//filtered.copyTo(output);
+		
+			/*findContours(output, contours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
+			Mat ct = Mat::zeros(output.size(), CV_8UC1);
+			for (int i = 0; i < contours.size(); i++) {
+				drawContours(ct, contours, i, Scalar(255, 255, 255), 1);
+			}*/
+		
+			hough(output,resized);
+		
+			unsigned int size=256;
+			//Mat test(size,size,CV_8UC1);
+			Mat test=Mat::zeros(size,size,CV_8UC1);
+			circle(test,Point(128,128),128,255,-1);
+		
+			imshow("Input", resized);
+			imshow("Output", output);
 
-		string sep = " ms # ";
-		cout << "TOTAL " << timer.total() << sep;
-		cout << "Hsv " << hsvThresholder.time() << sep;
-		cout << "Gauss " << gaussianFilter.time() << sep;
-		cout << "Dil&Er " << dilateEroder.time() << sep;
-		cout << "Hough " << hough.time() << sep;
-		cout << endl;
+			cout << "(" << input.rows << "," << input.cols << ")-(" << output.rows << "," << output.cols << ") # ";
 
-		if (waitKey(30) >= 0) break;
+			string sep = " ms # ";
+			cout << "TOTAL " << timer.total() << sep;
+			cout << "Hsv " << hsvThresholder.time() << sep;
+			cout << "Gauss " << gaussianFilter.time() << sep;
+			cout << "Dil&Er " << dilateEroder.time() << sep;
+			cout << "Hough " << hough.time() << sep;
+			cout << endl;
+
+			if (waitKey(30) >= 0) break;
+		}
 	}
 
 

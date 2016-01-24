@@ -1,0 +1,26 @@
+#ifndef CAMERA_H
+#define CAMERA_H
+
+#include <opencv2/opencv.hpp>
+#include <sstream>
+#include <iostream>
+#include "adjustable.h"
+
+class Camera : public cv::VideoCapture, public Adjustable {
+	public:
+		Camera(bool adjustable);
+		
+		static const unsigned int width=1280;
+		static const unsigned int height=960;
+		static const unsigned int framerate=25;
+		
+	private:
+		int v4l(std::string args);
+		int updateV4l(std::string name);
+		int updateV4lAll();
+	
+		virtual void adjusted(std::string name,int val);
+};
+
+#endif
+

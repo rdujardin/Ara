@@ -1,0 +1,22 @@
+v4l2-ctl
+
+--set-fmt-video=width=w,height=h,pixelformat=pf,field=f,bytesperline=bpl
+
+2.8u / 4m = 6.5c / x
+x = 45.5 10-6
+
+x / 2.8u = 6.5c / 4m
+
+
+2.8 u / 6.5 c = 4
+
+6.5 c / 2.8 u = x / 4m
+x=
+
+92m
+
+
+10px 9.2m
+20px 4.6m
+26px 3.45m
+
