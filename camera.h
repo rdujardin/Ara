@@ -4,6 +4,7 @@
 #include <opencv2/opencv.hpp>
 #include <sstream>
 #include <iostream>
+
 #include "adjustable.h"
 
 class Camera : public cv::VideoCapture, public Adjustable {
@@ -12,7 +13,10 @@ class Camera : public cv::VideoCapture, public Adjustable {
 		
 		static const unsigned int width=1280;
 		static const unsigned int height=960;
-		static const unsigned int framerate=25;
+		static const unsigned int framerate=30;
+		
+		static constexpr double focal=0.004;
+		static constexpr double pixelSize=0.0000028;
 		
 	private:
 		int v4l(std::string args);

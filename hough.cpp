@@ -7,7 +7,7 @@ Hough::Hough(Timer& timer, vector<Vec3f>& circles) : Timable(timer), _circles(ci
 
 void Hough::apply(Mat& src, Mat& dst) {
 	timerStart();
-	HoughCircles(src, _circles, CV_HOUGH_GRADIENT, 1, src.cols, 100, 15); //100,22
+	HoughCircles(src, _circles, CV_HOUGH_GRADIENT, 1, src.rows/4, 100, 15); //100,22
 	timerStop();
 	draw(dst);
 }

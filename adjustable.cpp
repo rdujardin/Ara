@@ -1,3 +1,4 @@
+#define ADJUSTABLE_C
 #include "adjustable.h"
 
 using namespace cv;
@@ -15,7 +16,7 @@ Adjustable::~Adjustable() {
 
 void Adjustable::makeAdjustable(string name,int count) {
 	_callbackParams[name]=new CallbackParam(name,this);
-	createTrackbar(name,_window,&(_params[name]),count,&Adjustable::callback,_callbackParams[name]);
+	if(activatedWindows[_window]) createTrackbar(name,_window,&(_params[name]),count,&Adjustable::callback,_callbackParams[name]);
 }
 
 void Adjustable::callback(int val,void *data) {

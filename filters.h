@@ -2,6 +2,7 @@
 #define FILTERS_H
 
 #include <opencv2/opencv.hpp>
+
 #include "timer.h"
 #include "adjustable.h"
 

@@ -4,6 +4,12 @@
 #include <opencv2/opencv.hpp>
 #include <string>
 
+#ifdef ADJUSTABLE_C
+std::map<std::string,bool> activatedWindows;
+#else
+extern std::map<std::string,bool> activatedWindows;
+#endif
+
 class Adjustable;
 
 struct CallbackParam {
