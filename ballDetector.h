@@ -7,7 +7,9 @@
 #include <iostream>
 #include <sstream>
 #include <ctime>
+#include <queue>
 
+#include "common.h"
 #include "timer.h"
 #include "hsv.h"
 #include "filters.h"
@@ -20,16 +22,14 @@ enum State {
 	RUNNING=1
 };
 
-struct Position {
-	int x,y,z;
-};
-
 class BallDetector {
 	public:
 		BallDetector(bool withBallPlacing,bool withGeneralSettings,bool withCamSettings,bool withGui,bool withBenchmarking);
 		~BallDetector();
+
+		void run(std::queue<Position>& detection,bool& running);
 		
-		bool loop(Position& pos);
+		bool loop(std::queue<Position>& detection);
 		
 		static constexpr double ballRadius=0.065;
 	private:

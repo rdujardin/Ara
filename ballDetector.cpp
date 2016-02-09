@@ -57,7 +57,15 @@ BallDetector::~BallDetector() {
 	delete _cam;
 }
 
-bool BallDetector::loop(Position& pos) {
+void BallDetector::run(queue<Position>& detection,bool& running) {
+	while(running) {
+		if(!loop(detection)) running=false;
+	}
+}
+
+bool BallDetector::loop(queue<Position>& detection) {
+
+	syncCout << "BALL DETECTOR THREAD !" << endl;
 	
 	_timer->reset();
 
@@ -94,7 +102,7 @@ bool BallDetector::loop(Position& pos) {
 
 		_dilateEroder->apply(output);
 	
-		DetectionList detections;;
+		DetectionList detections;
 		_ellipseFitter->apply(output,resized,detections);
 		
 		double detX=0,detY=0,detR=-1;
@@ -105,13 +113,18 @@ bool BallDetector::loop(Position& pos) {
 		}
 		detX/=detections.size();
 		detY/=detections.size();
+
+		Position pos;
 		
 		if(!detections.empty()) {
 			double z=_cam->focal*ballRadius/(2*((double) detR)*4*_cam->pixelSize);
 			pos.x=100*((((double) detX)*4-640)*_cam->pixelSize*z/_cam->focal);
 			pos.y=100*((480-((double) detY)*4)*_cam->pixelSize*z/_cam->focal);
 			pos.z=z*100;
-			cout << "u : " << detections[0].x << " / v : " << detections[0].y << " / r : " << detections[0].radius << " ### ";
+			syncCout << "u : " << detections[0].x << " / v : " << detections[0].y << " / r : " << detections[0].radius << " ### ";
+			detectionMutex.lock();
+				detection.push(pos);
+			detectionMutex.unlock();
 		}
 
 		if(_withGui) {
@@ -120,11 +133,11 @@ bool BallDetector::loop(Position& pos) {
 		}
 		
 		if(_withBenchmarking) {
-			cout << "BENCHMARK ## " << "Total : " << _timer->total() << " ms | ";
+			syncCout << "BENCHMARK ## " << "Total : " << _timer->total() << " ms | ";
 			for(map<string,Timable*>::const_iterator it=_timables.begin();it!=_timables.end();++it) {
-				cout << it->first << " : " << it->second->time() << " ms , ";
+				syncCout << it->first << " : " << it->second->time() << " ms , ";
 			}
-			cout << endl;
+			syncCout << endl;
 		}
 
 		if (waitKey(30) >= 0) return false;

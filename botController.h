@@ -4,17 +4,21 @@
 #include <opencv2/opencv.hpp>
 #include <cmath>
 #include <sstream>
+#include <queue>
 
 #include <wiringPi.h>
 #include <wiringSerial.h>
 
+#include "common.h"
 #include "adjustable.h"
 
 class BotController : public Adjustable {
 	public:
 		BotController(bool withBot,bool withGui,bool adjustable);
+
+		void run(std::queue<Position>& detection,bool& running);
 		
-		bool loop(double x,double y,double z);
+		bool loop(Position detection);
 		
 		virtual void adjusted(std::string name,int val);
 	private:

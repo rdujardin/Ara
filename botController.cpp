@@ -37,18 +37,34 @@ BotController::BotController(bool withBot,bool withGui,bool adjustable) : Adjust
 	}
 }
 
-bool BotController::loop(double x,double y,double z) {
+void BotController::run(queue<Position>& detection,bool& running) {
+	while(running) {
+		detectionMutex.lock();
+			bool hasDetected=!detection.empty();
+			syncCout << "BOT CONTROL : " << (hasDetected?"Y":"N") << endl;
+		detectionMutex.unlock();
+		if(_adjustable || hasDetected) {
+			if(!loop(detection.front())) running=false;
+			detection.pop();
+		}
+	}
+}
+
+bool BotController::loop(Position detection) {
+
+	syncCout << "BOT CONTROLLER THREAD !" << endl;
+
 	Mat draw1(_drawHeight,_drawWidth,CV_8UC3);
 	Mat draw2(_drawHeight,_drawWidth,CV_8UC3);
 
 	if(!_withGui && _adjustable) {
-		cout << "X ? ";
+		syncCout << "X ? ";
 		cin >> _inputX;
 		if(_inputX==_strCliQuit) return false;
-		cout << "Y ? ";
+		syncCout << "Y ? ";
 		cin >> _inputY;
 		if(_inputY==_strCliQuit) return false;
-		cout << "Z ? ";
+		syncCout << "Z ? ";
 		cin >> _inputZ;
 		if(_inputZ==_strCliQuit) return false;
 		_terminalX=atoi(_inputX.c_str());
@@ -57,12 +73,12 @@ bool BotController::loop(double x,double y,double z) {
 	}
 	
 	if(!_adjustable) {
-		_terminalX=x;
-		_terminalY=y;
-		_terminalZ=z;
+		_terminalX=(int) detection.x;
+		_terminalY=(int) detection.y;
+		_terminalZ=(int) detection.z;
 	}
 	
-	cout << "X : " << _terminalX << " / Y : " << _terminalY << " / Z : " << _terminalZ << endl;
+	syncCout << "X : " << _terminalX << " / Y : " << _terminalY << " / Z : " << _terminalZ << endl;
 
 	//calcul theta :
 	_theta0=atan2((_terminalZ-_length3*cos(_terminalAbsAlpha)*cos(_terminalAbsTheta)),(_terminalX+_length3*cos(_terminalAbsAlpha)*sin(_terminalAbsTheta)));
@@ -94,12 +110,12 @@ bool BotController::loop(double x,double y,double z) {
 		//if(waitKey(30)>=0) return false;
 	}
 	else {
-		cout << "alpha1 = " << _alpha1*180/M_PI << endl;
-		cout << "alpha2 = " << _alpha2*180/M_PI << endl;
-		cout << "alpha3 = " << _alpha3*180/M_PI << endl;
-		cout << "theta0 = " << _theta0*180/M_PI << endl;
-		cout << "theta3 = " << _theta3*180/M_PI << endl;
-		cout << "-------------------------" << endl;
+		syncCout << "alpha1 = " << _alpha1*180/M_PI << endl;
+		syncCout << "alpha2 = " << _alpha2*180/M_PI << endl;
+		syncCout << "alpha3 = " << _alpha3*180/M_PI << endl;
+		syncCout << "theta0 = " << _theta0*180/M_PI << endl;
+		syncCout << "theta3 = " << _theta3*180/M_PI << endl;
+		syncCout << "-------------------------" << endl;
 	}
 
 	sendToMotors();
@@ -172,7 +188,7 @@ bool BotController::initSerial() {
 
 void BotController::sendInt(int v) {
 	if(_withBot) serialPutchar(_fd,v);
-	cout << v << " , ";
+	syncCout << v << " , ";
 }
 
 int BotController::safe(int v) {
@@ -186,7 +202,7 @@ void BotController::sendAngle(double angle) {
 }
 
 void BotController::sendToMotors() {
-	cout << "## SENT " << string(_withBot?"(really)":"(virtually)") << " ";
+	syncCout << "## SENT " << string(_withBot?"(really)":"(virtually)") << " ";
 
 	sendInt(250);	
 	sendAngle(180-_theta0*180/M_PI); //Contraintes du a la position du servomoteur
@@ -195,7 +211,7 @@ void BotController::sendToMotors() {
 	sendAngle(90+_alpha3*180/M_PI);
 	sendAngle(90+_theta3*180/M_PI);	
 	
-	cout << endl;
+	syncCout << endl;
 
 
 	delay(30);
@@ -209,10 +225,10 @@ void BotController::sendToMotors() {
 			i++;
 		}
 		ret[i]=0;
-		if(strlen(ret)>0) cout << "-> Arduino says : " << endl << ret;
+		if(strlen(ret)>0) syncCout << "-> Arduino says : " << endl << ret;
 	}
 	
-	cout << endl;
+	syncCout << endl;
 	
 }
 

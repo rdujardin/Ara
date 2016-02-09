@@ -1,6 +1,8 @@
 #include <cstring>
 #include <iostream>
+#include <queue>
 
+#include "common.h"
 #include "ballDetector.h"
 #include "botController.h"
 
@@ -26,12 +28,15 @@ int main(int argc,char* argv[]) {
 
 	BallDetector ballDetector(mode!=ONLY_CONTROL,mode==ONLY_DETECTION,mode==ONLY_DETECTION,mode!=ONLY_CONTROL,mode==ONLY_DETECTION);
 	BotController botController(withBot,mode!=ONLY_DETECTION,mode==ONLY_CONTROL);
-	
-	while (true) {
-		Position pos;
-		if(!ballDetector.loop(pos)) break;
-		if(!botController.loop(pos.x,pos.y,pos.z)) break;
-	}
+
+	queue<Position> detection;
+	bool running=true;
+
+	thread t_ballDetector(&BallDetector::run,&ballDetector,detection,running);
+	thread t_botController(&BotController::run,&botController,detection,running);
+
+	t_botController.join();
+	t_ballDetector.join();
 
 	return 0;
 }
