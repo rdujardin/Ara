@@ -18,7 +18,7 @@ Camera::Camera(bool adjustable) : VideoCapture(CV_CAP_ANY), Adjustable("Camera S
 	_params["sharpness"]=0;
 	_params["backlight_compensation"]=0;
 	_params["exposure_auto"]=1;
-	_params["exposure_absolute"]=400;
+	_params["exposure_absolute"]=100; //night:400
 	_params["exposure_auto_priority"]=1;
 	
 	updateV4lAll();
