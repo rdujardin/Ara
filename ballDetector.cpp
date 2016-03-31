@@ -32,7 +32,39 @@ BallDetector::BallDetector(bool withBallPlacing,bool withGeneralSettings,bool wi
 		cv::namedWindow("Camera Settings", 5);
 		moveWindow("Camera Settings",840,40);
 	}
-	
+
+	//KALMAN
+	pourcent=0;
+	centre=Point(2*320,2*240);
+	//Initialisation of the filter
+	KF.transitionMatrix=(Mat_<float>(4,4) << 1,0,1,0, 0,1,0,1, 0,0,0.6,0, 0,0,0,0.6); //Sans * au début de la parenthèse
+	measurement.setTo(Scalar(0));
+
+	KF.statePost.at<float>(0)=0;
+	KF.statePost.at<float>(1)=0;
+	KF.statePost.at<float>(2)=0;
+	KF.statePost.at<float>(3)=0;
+	setIdentity(KF.measurementMatrix);
+	setIdentity(KF.processNoiseCov,Scalar::all(1e-2)); //Rapidité du "rattrapage" de l'estimation
+	setIdentity(KF.measurementNoiseCov,Scalar::all(10));
+	setIdentity(KF.errorCovPost,Scalar::all(1));
+	//---	
+
+	//CALIBRAGE
+	Mat distCoeffs=(Mat_<double>(5,1) << -4.4806416419013684e-01,4.1928815312056306e-01,0,0,-4.8777148182526148e-01);
+	Mat cameraMatrix=(Mat_<double>(3,3) << 6.4106316770762089e+02,0,3.195e+02,0,6.4106316770762089e+02,2.395e+02,0,0,1);
+	Mat map1,map2;
+
+	Size imageSize=Size(640,480);
+	initUndistortRectifyMap(cameraMatrix,distCoeffs,Mat(),
+	getOptimalNewCameraMatrix(cameraMatrix,distCoeffs,imageSize,1,imageSize,0),
+	imageSize,CV_16SC2,map1,map2);
+	_map1=map1;
+	_map2=map2;
+	ofstream fichier("test.txt");
+	fichier << _map1;
+	//---
+
 	_cam=new Camera(true);
 	if (!_cam->isOpened()) throw -1;
 	
@@ -57,23 +89,23 @@ BallDetector::~BallDetector() {
 	delete _cam;
 }
 
-void BallDetector::run(queue<Position>& detection,bool& running) {
-	while(running) {
-		if(!loop(detection)) running=false;
-	}
-}
+bool BallDetector::loop(Position& detection) {
 
-bool BallDetector::loop(queue<Position>& detection) {
-
-	syncCout << "BALL DETECTOR THREAD !" << endl;
-	
 	_timer->reset();
 
 	Mat input, output;
-	(*_cam) >> input;
+	bool newFrame=cam->read(input);
+	if(_state!=PLACE_BALL && !newFrame) {
+		if(waitKey(30)>=0) return false;
+		else return true;
+	}
 
 	Mat resized;
 	resize(input,resized,Size(320,240));
+
+	//remap(input,input,_map1,_map2,INTER_LINEAR); //?
+	vector<Point> poisition_filterless(1); //?
+	vector<Point> position_filtered(1); //?
 
 	if(_state==PLACE_BALL) {
 		circle(resized,Point(160,120),HSV_Thresholder::autoSetRadius,Scalar(0,0,255),4);
@@ -121,27 +153,80 @@ bool BallDetector::loop(queue<Position>& detection) {
 			pos.x=100*((((double) detX)*4-640)*_cam->pixelSize*z/_cam->focal);
 			pos.y=100*((480-((double) detY)*4)*_cam->pixelSize*z/_cam->focal);
 			pos.z=z*100;
-			syncCout << "u : " << detections[0].x << " / v : " << detections[0].y << " / r : " << detections[0].radius << " ### ";
-			detectionMutex.lock();
-				detection.push(pos);
-			detectionMutex.unlock();
+			cout << "u : " << detections[0].x << " / v : " << detections[0].y << " / r : " << detections[0].radius << " ### ";
+			detection.push(pos); //?
+			Mat filtered_position=kalmanFilter(detections[0].x,detections[0].y); //?
 		}
 
 		if(_withGui) {
 			imshow("Input", resized);
 			imshow("Output", output);
+			imshow("2D Position",_kalman); //?
 		}
 		
 		if(_withBenchmarking) {
-			syncCout << "BENCHMARK ## " << "Total : " << _timer->total() << " ms | ";
+			cout << "BENCHMARK ## " << "Total : " << _timer->total() << " ms | ";
 			for(map<string,Timable*>::const_iterator it=_timables.begin();it!=_timables.end();++it) {
-				syncCout << it->first << " : " << it->second->time() << " ms , ";
+				cout << it->first << " : " << it->second->time() << " ms , ";
 			}
-			syncCout << endl;
+			cout << endl;
 		}
 
 		if (waitKey(30) >= 0) return false;
 	}
 	return true;
+}
+
+//KALMAN
+cv::Mat BallDetector::kalmanFilter(double posx,double posy) {
+	//mem.copyTo(im);
+	//First predict, to update the internal statePre variable
+	Mat prediction=KF.predict();
+	Point predictPt(prediction.at<float>(0),prediction.at<float>(1));
+	//Get ball position
+	measurement(0)=2*posx;
+	measurement(1)=2*posy;
+	//The update phase
+	Mat estimated=KF.correct(measurement);
+
+	Point statePt(estimated.at<float>(0),estimated.at<float>(1));
+	Point measPt(measurement(0),measurement(1));
+	//plot points
+	//activer si dessin sur fond noir
+
+	positionv.push_back(measPt);
+	kalmanv.push_back(statePt);
+
+	if(positionv.size()>50) {
+		positionv.erase(positionv.begin());
+		kalmanv.erase(kalmanv.begin());
+		_kalman=Scalar::all(0);
+	}
+	drawCross(statePt,Scalar(255,255,255),5);
+	drawCross(measPt,Scalar(0,0,255),5);
+
+	for(int i=0;i<positionv.size()-1,i++) {
+		line(_kalman,positionv[i],positionv[i+1],Scalar(255,255,0),1);
+		cout << "brut = " << positionv[i];
+	}
+
+	for(int i=0;i<kalmanv.size();i++) {
+		line(_kalman,kalmanv[i],kalmanv[i+1],Scalar(0,0,255),1);
+		cout << "_kalman = " << kalmanv[i] << endl;
+	}
+
+	if(posx>2*320+40 || posx<2*320-40) {
+		//circle(_kalman,centre,2*abs(320-posx),Scalar(0,0,255),1,1,1);
+		pourcent=2*abs(320-posx)*100/(_kalman.cols); //2*Eloignement / largeur_image %
+		cout << "Puissance moteur = " << pourcent << "%" << endl;
+		//putText(im,"TEST",centre,5,10,0,Scalar(0,0,255));
+	}
+
+	cout << "x brut = " << posx;
+	cout << " | y brut = " << posy << endl;
+	cout << "x _kalman = " << estimated.at<float>(0);
+	cout << " | y _kalman = " << estimated.at<float>(1) << endl;
+
+	return estimated;
 }
 

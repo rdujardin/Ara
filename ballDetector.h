@@ -7,7 +7,8 @@
 #include <iostream>
 #include <sstream>
 #include <ctime>
-#include <queue>
+#include <vector>
+#include <fstream>
 
 #include "common.h"
 #include "timer.h"
@@ -17,19 +18,24 @@
 #include "camera.h"
 #include "detectors.h"
 
+#define drawCross(center,color,d)
+
 enum State {
 	PLACE_BALL=0,
 	RUNNING=1
 };
+
+static cv::Mat _kalman=cv::Mat::zeros(480,640,CV_8UC3);
+static cv::KalmanFilter KF(4,2,0);
+static cv::Mat_<float> measurement(2,1);
+static std::vector<cv::Point> positionv, kalmanv;
 
 class BallDetector {
 	public:
 		BallDetector(bool withBallPlacing,bool withGeneralSettings,bool withCamSettings,bool withGui,bool withBenchmarking);
 		~BallDetector();
 
-		void run(std::queue<Position>& detection,bool& running);
-		
-		bool loop(std::queue<Position>& detection);
+		bool loop(Position& detection);
 		
 		static constexpr double ballRadius=0.065;
 	private:
@@ -42,6 +48,10 @@ class BallDetector {
 		DilateEroder* _dilateEroder;
 		Hough* _hough;
 		EllipseFitter* _ellipseFitter;
+
+		cv::Mat _map1, _map2;
+		int pourcent;
+		cv::Point centre;
 		
 		std::map<std::string,Timable*> _timables;
 };

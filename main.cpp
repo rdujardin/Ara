@@ -1,6 +1,5 @@
 #include <cstring>
 #include <iostream>
-#include <queue>
 
 #include "common.h"
 #include "ballDetector.h"
@@ -26,17 +25,18 @@ int main(int argc,char* argv[]) {
 	activatedWindows["Bras (vue de cote)"]=(mode!=ONLY_DETECTION);
 	activatedWindows["Bras (vue de haut)"]=(mode!=ONLY_DETECTION);
 
-	BallDetector ballDetector(mode!=ONLY_CONTROL,mode==ONLY_DETECTION,mode==ONLY_DETECTION,mode!=ONLY_CONTROL,mode==ONLY_DETECTION);
-	BotController botController(withBot,mode!=ONLY_DETECTION,mode==ONLY_CONTROL);
+	BallDetector* ballDetector=NULL;
+	if(mode!=ONLY_CONTROL) ballDetector=new BallDetector(mode!=ONLY_CONTROL,mode==ONLY_DETECTION,mode==ONLY_DETECTION,mode!=ONLY_CONTROL,mode==ONLY_DETECTION);
+	BotController* botController=new BotController(withBot,mode!=ONLY_DETECTION,mode==ONLY_CONTROL);
 
-	queue<Position> detection;
-	bool running=true;
+	while(true) {
+		Position pos;
+		if(!ballDetector.loop(pos)) break;
+		if(!botController.loop(pos)) break;
+	}
 
-	thread t_ballDetector(&BallDetector::run,&ballDetector,detection,running);
-	thread t_botController(&BotController::run,&botController,detection,running);
-
-	t_botController.join();
-	t_ballDetector.join();
+	delete botController;
+	if(ballDetector) delete ballDetector;
 
 	return 0;
 }

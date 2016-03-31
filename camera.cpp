@@ -3,14 +3,14 @@
 using namespace cv;
 using namespace std;
 
-Camera::Camera(bool adjustable) : VideoCapture(CV_CAP_ANY), Adjustable("Camera Settings") {
+Camera::Camera(bool adjustable) : VideoCapture(CV_CAP_ANY/*j1*/), Adjustable("Camera Settings") {
 	set(CV_CAP_PROP_FRAME_WIDTH, width);
 	set(CV_CAP_PROP_FRAME_HEIGHT, height);
 	set(CV_CAP_PROP_FPS, framerate);
 	
 	_params["brightness"]=128;
 	_params["contrast"]=32;
-	_params["saturation"]=64;
+	_params["saturation"]=64; //j128
 	_params["white_balance_temperature_auto"]=0;
 	_params["gain"]=37; //0
 	_params["power_line_frequency"]=1;
@@ -19,7 +19,7 @@ Camera::Camera(bool adjustable) : VideoCapture(CV_CAP_ANY), Adjustable("Camera S
 	_params["backlight_compensation"]=0;
 	_params["exposure_auto"]=1;
 	_params["exposure_absolute"]=100; //night:400
-	_params["exposure_auto_priority"]=1;
+	_params["exposure_auto_priority"]=1; //j0
 	
 	updateV4lAll();
 	

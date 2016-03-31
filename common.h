@@ -4,6 +4,7 @@
 #include <thread>
 #include <mutex>
 #include <iostream>
+#include <queue>
 
 struct Position {
 	double x,y,z;
@@ -15,23 +16,31 @@ struct Position {
 	extern std::mutex detectionMutex;
 #endif
 
-class SyncOutputStream {
-	public:
-		SyncOutputStream(std::ostream& out);
+static std::mutex _coutMutex;
 
-		static std::mutex _mutex;
-		std::ostream* _out;
+class SyncCout {
+	public:
+		SyncCout();
+		
+		SyncCout& operator()(const int& t);
+		SyncCout& operator()(const double& t);
+		SyncCout& operator()(const char& t);
+		SyncCout& operator()(const std::string& t);
+
+
+	private:
+		
 };
 
-SyncOutputStream& operator<<(SyncOutputStream& out,int v);
-SyncOutputStream& operator<<(SyncOutputStream& out,double v);
-SyncOutputStream& operator<<(SyncOutputStream& out,std::string v);
+SyncCout& operator<<(SyncCout& out,int v);
+SyncCout& operator<<(SyncCout& out,double v);
+SyncCout& operator<<(SyncCout& out,char v);
+SyncCout& operator<<(SyncCout& out,std::string v);
 
-#ifdef COMMON_C
-	SyncOutputStream syncCout(std::cout);
-#else
-	extern SyncOutputStream syncCout;
-#endif
+static SyncCout syncCout;
+static char syncEndl='\n';
+
+static std::queue<Position> detection;
 
 #endif
 

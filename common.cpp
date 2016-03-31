@@ -1,28 +1,48 @@
 #define COMMON_C
 #include "common.h"
 
-SyncOutputStream::SyncOutputStream(std::ostream& out) {
-	_out=&out;
+using namespace std;
+
+SyncCout::SyncCout() {}
+
+SyncCout& SyncCout::operator()(const int& t) {
+	_coutMutex.lock();
+	cout << t;
+	_coutMutex.unlock();
+	return *this;
 }
 
-SyncOutputStream& operator<<(SyncOutputStream& out,int v) {
-	out._mutex.lock();
-	(*(out._out)) << v;
-	out._mutex.unlock();
-	return out;
+SyncCout& SyncCout::operator()(const double& t) {
+	_coutMutex.lock();
+	cout << t;
+	_coutMutex.unlock();
+	return *this;
 }
 
-SyncOutputStream& operator<<(SyncOutputStream& out,double v) {
-	out._mutex.lock();
-	(*(out._out)) << v;
-	out._mutex.unlock();
-	return out;
+SyncCout& SyncCout::operator()(const char& t) {
+	_coutMutex.lock();
+	cout << t;
+	_coutMutex.unlock();
+	return *this;
 }
 
-SyncOutputStream& operator<<(SyncOutputStream& out,std::string v) {
-	out._mutex.lock();
-	(*(out._out)) << v;
-	out._mutex.unlock();
-	return out;
+SyncCout& SyncCout::operator()(const string& t) {
+	_coutMutex.lock();
+	cout << t;
+	_coutMutex.unlock();
+	return *this;
+}
+
+SyncCout& operator<<(SyncCout& out,int v) {
+	return out(v);
+}
+SyncCout& operator<<(SyncCout& out,double v) {
+	return out(v);
+}
+SyncCout& operator<<(SyncCout& out,char v) {
+	return out(v);
+}
+SyncCout& operator<<(SyncCout& out,string v) {
+	return out(v);
 }
 

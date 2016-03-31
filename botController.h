@@ -1,10 +1,9 @@
-#ifndef BRAS_H
-#define BRAS_H
+#ifndef BOT_CONTROLLER_H
+#define BOT_CONTROLLER_H
 
 #include <opencv2/opencv.hpp>
 #include <cmath>
 #include <sstream>
-#include <queue>
 
 #include <wiringPi.h>
 #include <wiringSerial.h>
@@ -16,8 +15,6 @@ class BotController : public Adjustable {
 	public:
 		BotController(bool withBot,bool withGui,bool adjustable);
 
-		void run(std::queue<Position>& detection,bool& running);
-		
 		bool loop(Position detection);
 		
 		virtual void adjusted(std::string name,int val);
@@ -26,7 +23,7 @@ class BotController : public Adjustable {
 		static constexpr double _terminalAbsTheta=0.01*M_PI/180;
 		static constexpr double _length1=30;
 		static constexpr double _length2=30;
-		static constexpr double _length3=10;
+		static constexpr double _length3=20;
 		
 		static constexpr double _drawScale=6.5;
 		static constexpr unsigned int _drawWidth=640;
