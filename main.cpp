@@ -31,8 +31,9 @@ int main(int argc,char* argv[]) {
 
 	while(true) {
 		Position pos;
-		if(!ballDetector.loop(pos)) break;
-		if(!botController.loop(pos)) break;
+		if(mode!=ONLY_CONTROL) if(!ballDetector->loop(pos)) break;
+		cout << "####POSITION " << pos.x << " / " << pos.y << " / " << pos.z << endl;
+		if(!botController->loop(pos)) break;
 	}
 
 	delete botController;

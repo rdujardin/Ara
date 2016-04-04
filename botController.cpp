@@ -39,8 +39,8 @@ BotController::BotController(bool withBot,bool withGui,bool adjustable) : Adjust
 
 bool BotController::loop(Position detection) {
 
-	Mat draw1(_drawHeight,_drawWidth,CV_8UC3);
-	Mat draw2(_drawHeight,_drawWidth,CV_8UC3);
+	Mat draw1=Mat::zeros(_drawHeight,_drawWidth,CV_8UC3);
+	Mat draw2=Mat::zeros(_drawHeight,_drawWidth,CV_8UC3);
 
 	if(!_withGui && _adjustable) {
 		cout << "X ? ";

@@ -37,8 +37,8 @@ void GaussianFilter::adjusted(string name,int val) {
 
 DilateEroder::DilateEroder(Timer& timer, bool adjustable) : Timable(timer), Adjustable() {
 	
-	_params["Dilate size"]=2;//8
-	_params["Erode size"]=2;//8
+	_params["Dilate size"]=4;//8 //2
+	_params["Erode size"]=2;//8 //2
 	
 	if(adjustable) {
 		makeAdjustable("Dilate size",40);

@@ -94,7 +94,7 @@ bool BallDetector::loop(Position& detection) {
 	_timer->reset();
 
 	Mat input, output;
-	bool newFrame=cam->read(input);
+	bool newFrame=_cam->read(input);
 	if(_state!=PLACE_BALL && !newFrame) {
 		if(waitKey(30)>=0) return false;
 		else return true;
@@ -150,12 +150,12 @@ bool BallDetector::loop(Position& detection) {
 		
 		if(!detections.empty()) {
 			double z=_cam->focal*ballRadius/(2*((double) detR)*4*_cam->pixelSize);
-			pos.x=100*((((double) detX)*4-640)*_cam->pixelSize*z/_cam->focal);
-			pos.y=100*((480-((double) detY)*4)*_cam->pixelSize*z/_cam->focal);
-			pos.z=z*100;
+			detection.z=z*100;
 			cout << "u : " << detections[0].x << " / v : " << detections[0].y << " / r : " << detections[0].radius << " ### ";
-			detection.push(pos); //?
-			Mat filtered_position=kalmanFilter(detections[0].x,detections[0].y); //?
+			//detections[0]
+			Mat filtered_position=kalmanFilter(detX,detY); //?
+			detection.x=100*((((double) filtered_position.at<float>(0))*4-640)*_cam->pixelSize*z/_cam->focal); //detX
+			detection.y=100*((480-((double) filtered_position.at<float>(1))*4)*_cam->pixelSize*z/_cam->focal); //detY
 		}
 
 		if(_withGui) {
@@ -205,7 +205,7 @@ cv::Mat BallDetector::kalmanFilter(double posx,double posy) {
 	drawCross(statePt,Scalar(255,255,255),5);
 	drawCross(measPt,Scalar(0,0,255),5);
 
-	for(int i=0;i<positionv.size()-1,i++) {
+	for(int i=0;i<positionv.size()-1;i++) {
 		line(_kalman,positionv[i],positionv[i+1],Scalar(255,255,0),1);
 		cout << "brut = " << positionv[i];
 	}

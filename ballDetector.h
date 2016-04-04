@@ -54,6 +54,8 @@ class BallDetector {
 		cv::Point centre;
 		
 		std::map<std::string,Timable*> _timables;
+
+		cv::Mat kalmanFilter(double posx,double posy);
 };
 
 #endif

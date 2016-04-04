@@ -15,7 +15,7 @@ public:
 	
 	void autoSet(cv::Mat& img);
 	
-	static const unsigned int autoSetRadius=60;
+	static const unsigned int autoSetRadius=50;
 	
 private:	
 	virtual void adjusted(std::string name,int val);

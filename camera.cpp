@@ -3,7 +3,7 @@
 using namespace cv;
 using namespace std;
 
-Camera::Camera(bool adjustable) : VideoCapture(CV_CAP_ANY/*j1*/), Adjustable("Camera Settings") {
+Camera::Camera(bool adjustable) : VideoCapture(1/*j1*/), Adjustable("Camera Settings") {
 	set(CV_CAP_PROP_FRAME_WIDTH, width);
 	set(CV_CAP_PROP_FRAME_HEIGHT, height);
 	set(CV_CAP_PROP_FPS, framerate);
@@ -14,12 +14,13 @@ Camera::Camera(bool adjustable) : VideoCapture(CV_CAP_ANY/*j1*/), Adjustable("Ca
 	_params["white_balance_temperature_auto"]=0;
 	_params["gain"]=37; //0
 	_params["power_line_frequency"]=1;
-	_params["white_balance_temperature"]=0;
+	_params["white_balance_temperature"]=4000;
 	_params["sharpness"]=0;
 	_params["backlight_compensation"]=0;
-	_params["exposure_auto"]=1;
-	_params["exposure_absolute"]=100; //night:400
-	_params["exposure_auto_priority"]=1; //j0
+	_params["exposure_auto"]=1; //1 : manual mode
+	_params["exposure_auto_priority"]=0; //j0
+	_params["exposure_absolute"]=200; //night:400
+	
 	
 	updateV4lAll();
 	
@@ -35,7 +36,7 @@ Camera::Camera(bool adjustable) : VideoCapture(CV_CAP_ANY/*j1*/), Adjustable("Ca
 }
 
 int Camera::v4l(string args) {
-	string str="v4l2-ctl -d /dev/video0 "+args;
+	string str="v4l2-ctl -d /dev/video1 "+args;
 	return system(str.c_str());
 }
 
