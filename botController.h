@@ -35,7 +35,7 @@ class BotController : public Adjustable {
 		static const std::string _strCliQuit;
 		
 		double _alpha1,_alpha2,_alpha3,_theta0,_theta3;
-		int _terminalX,_terminalY,_terminalZ;
+		double _terminalX,_terminalY,_terminalZ;
 		double _wristX,_wristY,_terminalXTh,_length3Al;
 		static constexpr double _length3Th=_length3*cos(_terminalAbsAlpha);
 		

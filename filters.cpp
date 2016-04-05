@@ -7,9 +7,9 @@ using namespace cv;
 
 GaussianFilter::GaussianFilter(Timer& timer, bool adjustable) : Timable(timer), Adjustable() {
 	
-	_params["Gaussian width"]=4;//8
-	_params["Gaussian height"]=4;//8
-	_params["Gaussian sigX"]=3;//10
+	_params["Gaussian width"]=7;//8 //4
+	_params["Gaussian height"]=10;//8 //4
+	_params["Gaussian sigX"]=25;//10 //3
 	
 	if(adjustable) {
 		makeAdjustable("Gaussian width",30);
@@ -38,11 +38,15 @@ void GaussianFilter::adjusted(string name,int val) {
 DilateEroder::DilateEroder(Timer& timer, bool adjustable) : Timable(timer), Adjustable() {
 	
 	_params["Dilate size"]=4;//8 //2
-	_params["Erode size"]=2;//8 //2
+	_params["Erode size"]=4;//8 //2
+	_params["Dilate iterations"]=2;
+	_params["Erode iterations"]=5;
 	
 	if(adjustable) {
 		makeAdjustable("Dilate size",40);
 		makeAdjustable("Erode size",40);
+		makeAdjustable("Dilate iterations",40);
+		makeAdjustable("Erode iterations",40);
 	}
 }
 
@@ -62,8 +66,8 @@ void DilateEroder::apply(Mat& img) {
 	circle(_dilateStructure,Point(_dilateSize/2,_dilateSize/2),_dilateSize/2,255,-1);
 	circle(_erodeStructure,Point(_erodeSize/2,_erodeSize/2),_erodeSize/2,255,-1);
 	
-	erode(img,img,_erodeStructure);
-	dilate(img,img,_dilateStructure);
+	erode(img,img,_erodeStructure,Point(-1,-1),_params["Dilate iterations"]);
+	dilate(img,img,_dilateStructure,Point(-1,-1),_params["Erode iterations"]);
 	
 	timerStop();
 }

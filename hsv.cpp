@@ -43,7 +43,11 @@ void HSV_Thresholder::createUi() {
 
 void HSV_Thresholder::autoSet(Mat& img) {
 	
-	Mat hsv(img,Rect(Camera::width/2-autoSetRadius*4/sqrt(2),Camera::height/2-autoSetRadius*4/sqrt(2),autoSetRadius*8/sqrt(2),autoSetRadius*8/sqrt(2)));
+	//Mat hsv(img,Rect(Camera::width/2-autoSetRadius/**4/sqrt(2)*/,Camera::height/2-autoSetRadius/**4/sqrt(2)*/,autoSetRadius*2/*8/sqrt(2)*/,autoSetRadius*2/*8/sqrt(2)*/)); //*4,*4,*8,*8
+	//Mat hsv(img,Rect(320,240,640,480));
+	//Mat hsv(img,Rect(Camera::width/2-100,Camera::height/2-100,200,200));
+	Mat hsv(img,Rect(Camera::width/2-100/sqrt(2),Camera::height/2-100/sqrt(2),2*100/sqrt(2),2*100/sqrt(2)));
+	imshow("Debug",hsv);
 	cvtColor(hsv,hsv,CV_BGR2HSV);
 	
 	vector<Mat> channels;

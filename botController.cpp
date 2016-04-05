@@ -58,9 +58,9 @@ bool BotController::loop(Position detection) {
 	}
 	
 	if(!_adjustable) {
-		_terminalX=(int) detection.x;
-		_terminalY=(int) detection.y;
-		_terminalZ=(int) detection.z;
+		_terminalX=detection.x;
+		_terminalY=detection.y;
+		_terminalZ=detection.z;
 	}
 	
 	cout << "X : " << _terminalX << " / Y : " << _terminalY << " / Z : " << _terminalZ << endl;

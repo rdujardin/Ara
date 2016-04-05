@@ -15,7 +15,7 @@ class Camera : public cv::VideoCapture, public Adjustable {
 		static const unsigned int height=960;
 		static const unsigned int framerate=30;
 		
-		static constexpr double focal=0.004;
+		static constexpr double focal=0.0039;
 		static constexpr double pixelSize=0.0000028;
 		
 	private:

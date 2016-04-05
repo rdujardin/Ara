@@ -15,7 +15,7 @@ public:
 	
 	void autoSet(cv::Mat& img);
 	
-	static const unsigned int autoSetRadius=50;
+	static const unsigned int autoSetRadius=100; // si changé, changer ballDetector.cpp:118 et hsv.cpp:49
 	
 private:	
 	virtual void adjusted(std::string name,int val);

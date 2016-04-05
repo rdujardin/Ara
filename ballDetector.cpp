@@ -10,8 +10,9 @@ BallDetector::BallDetector(bool withBallPlacing,bool withGeneralSettings,bool wi
 	
 	if(_withGui) {
 		cv::namedWindow("Input", 1);
-		cv::namedWindow("Output", 2);
-		cv::namedWindow("Hsv", 4);
+		cv::namedWindow("Output", 1);
+		cv::namedWindow("Hsv", 1);
+		cv::namedWindow("Debug",1);
 		if(withGeneralSettings) {
 			moveWindow("Input",520,40);
 			moveWindow("Hsv",520,308);
@@ -73,14 +74,17 @@ BallDetector::BallDetector(bool withBallPlacing,bool withGeneralSettings,bool wi
 	_gaussianFilter=new GaussianFilter(*_timer, true);
 	_dilateEroder=new DilateEroder(*_timer, true);
 	_ellipseFitter=new EllipseFitter(*_timer);
+	_momentsDetector=new MomentsCalculator(*_timer);
 	
 	_timables["Hsv"]=_hsvThresholder;
 	_timables["Blur"]=_gaussianFilter;
 	_timables["DilEr"]=_dilateEroder;
 	_timables["Ellipse"]=_ellipseFitter;
+	_timables["Moments"]=_momentsDetector;
 }
 
 BallDetector::~BallDetector() {
+	delete _momentsDetector;
 	delete _ellipseFitter;
 	delete _dilateEroder;
 	delete _gaussianFilter;
@@ -93,23 +97,27 @@ bool BallDetector::loop(Position& detection) {
 
 	_timer->reset();
 
-	Mat input, output;
+	Mat input(Camera::width,Camera::height,CV_8UC3);
+	Mat output(Camera::width,Camera::height,CV_8UC3);
+
 	bool newFrame=_cam->read(input);
 	if(_state!=PLACE_BALL && !newFrame) {
 		if(waitKey(30)>=0) return false;
 		else return true;
 	}
 
-	Mat resized;
-	resize(input,resized,Size(320,240));
+	Mat resized(Camera::width,Camera::height,CV_8UC3);
+	//resize(input,resized,Size(320,240));
+	//resized=input;
+	input.copyTo(resized);
 
-	//remap(input,input,_map1,_map2,INTER_LINEAR); //?
+	//remap(input,input,_map1,_map2,INTER_LINEAR); //?                 //  <<<<<<<<  REMAP HERE <<<<<<< 
 	vector<Point> poisition_filterless(1); //?
 	vector<Point> position_filtered(1); //?
 
 	if(_state==PLACE_BALL) {
-		circle(resized,Point(160,120),HSV_Thresholder::autoSetRadius,Scalar(0,0,255),4);
-		Mat flipped;
+		circle(resized,Point(Camera::width/2,Camera::height/2),/*HSV_Thresholder::autoSetRadius*/100,Scalar(0,0,255),4);
+		Mat flipped(Camera::width,Camera::height,CV_8UC3);
 		flip(resized,flipped,1);
 	
 		if(_withGui) {
@@ -135,7 +143,8 @@ bool BallDetector::loop(Position& detection) {
 		_dilateEroder->apply(output);
 	
 		DetectionList detections;
-		_ellipseFitter->apply(output,resized,detections);
+		//_ellipseFitter->apply(output,resized,detections);
+		_momentsDetector->apply(output,resized,detections);
 		
 		double detX=0,detY=0,detR=-1;
 		for(DetectionList::const_iterator it=detections.begin();it!=detections.end();++it) {

@@ -13,6 +13,8 @@ struct Detection {
 
 typedef std::vector<Detection> DetectionList;
 
+void drawDetections(cv::Mat& dst,DetectionList& detect);
+
 //------------------------------------------------------------------------------
 
 class EllipseFitter : public Timable {
@@ -24,10 +26,18 @@ public:
 	void operator()(cv::Mat& img,DetectionList& out);
 	void operator()(cv::Mat& img,cv::Mat& dst,DetectionList& out);
 private:
-	void draw(cv::Mat& dst,DetectionList& detect);
+	
 };
 
 //------------------------------------------------------------------------------
+
+class MomentsCalculator : public Timable {
+public:
+	MomentsCalculator(Timer& timer);
+
+	void apply(cv::Mat& img,cv::Mat& drawOut,DetectionList& out);
+	void operator()(cv::Mat& img,cv::Mat& drawOut,DetectionList& out);
+};
 
 #endif
 

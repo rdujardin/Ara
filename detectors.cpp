@@ -33,7 +33,7 @@ void EllipseFitter::apply(Mat& img,DetectionList& out) {
 
 void EllipseFitter::apply(Mat& img,Mat& dst,DetectionList& out) {
 	apply(img,out);
-	draw(dst,out);
+	drawDetections(dst,out);
 }
 
 void EllipseFitter::operator()(Mat& img,DetectionList& out) {
@@ -44,7 +44,7 @@ void EllipseFitter::operator()(Mat& img,Mat& dst,DetectionList& out) {
 	apply(img,dst,out);
 }
 
-void EllipseFitter::draw(Mat& dst,DetectionList& detect) {
+void drawDetections(Mat& dst,DetectionList& detect) {
 	unsigned int color=0;
 	for(DetectionList::const_iterator it=detect.begin();it!=detect.end();++it) {
 		Point center(round(it->x),round(it->y));
@@ -61,4 +61,27 @@ void EllipseFitter::draw(Mat& dst,DetectionList& detect) {
 }
 
 //------------------------------------------------------------------------------
+
+MomentsCalculator::MomentsCalculator(Timer& timer) : Timable(timer){}
+
+void MomentsCalculator::apply(Mat& img,Mat& drawOut,DetectionList& out) {
+	timerStart();
+
+	Moments m=moments(img,true);
+
+	Detection d;
+	d.x=m.m10/m.m00;
+	d.y=m.m01/m.m00;
+	d.radius=30;
+//	d.ellipseRect=
+	out.push_back(d);
+
+	timerStop();
+
+	drawDetections(drawOut,out);
+}
+
+void MomentsCalculator::operator()(Mat& img,Mat& drawOut,DetectionList& out) {
+	apply(img,drawOut,out);
+}
 
