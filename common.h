@@ -42,5 +42,8 @@ static char syncEndl='\n';
 
 static std::queue<Position> detection;
 
+#define WORK_W 640
+#define WORK_H 480
+
 #endif
 

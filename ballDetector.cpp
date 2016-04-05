@@ -106,18 +106,19 @@ bool BallDetector::loop(Position& detection) {
 		else return true;
 	}
 
-	Mat resized(Camera::width,Camera::height,CV_8UC3);
+	Mat resized(WORK_W,WORK_H,CV_8UC3);
 	//resize(input,resized,Size(320,240));
 	//resized=input;
-	input.copyTo(resized);
+	//input.copyTo(resized);
+	resize(input,resized,Size(WORK_W,WORK_H));
 
-	//remap(input,input,_map1,_map2,INTER_LINEAR); //?                 //  <<<<<<<<  REMAP HERE <<<<<<< 
+	remap(resized,resized,_map1,_map2,INTER_LINEAR); //?                 //  <<<<<<<<  REMAP HERE <<<<<<< 
 	vector<Point> poisition_filterless(1); //?
 	vector<Point> position_filtered(1); //?
 
 	if(_state==PLACE_BALL) {
-		circle(resized,Point(Camera::width/2,Camera::height/2),/*HSV_Thresholder::autoSetRadius*/100,Scalar(0,0,255),4);
-		Mat flipped(Camera::width,Camera::height,CV_8UC3);
+		circle(resized,Point(WORK_W/2,WORK_H/2),/*HSV_Thresholder::autoSetRadius*/100,Scalar(0,0,255),4);
+		Mat flipped(WORK_W,WORK_H,CV_8UC3);
 		flip(resized,flipped,1);
 	
 		if(_withGui) {
