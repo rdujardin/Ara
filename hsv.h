@@ -6,6 +6,9 @@
 #include "timer.h"
 #include "camera.h"
 
+#define HSV_RANGE_EXTEND 10
+#define HSV_AUTOSET_RADIUS 30
+
 class HSV_Thresholder : public Timable, public Adjustable {
 public:
 	HSV_Thresholder(Timer& timer, bool adjustable);
@@ -15,7 +18,7 @@ public:
 	
 	void autoSet(cv::Mat& img);
 	
-	static const unsigned int autoSetRadius=100; // si changé, changer ballDetector.cpp:118 et hsv.cpp:49
+	//static const unsigned int autoSetRadius=100; // si changé, changer ballDetector.cpp:118 et hsv.cpp:49
 	
 private:	
 	virtual void adjusted(std::string name,int val);

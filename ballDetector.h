@@ -25,7 +25,7 @@ enum State {
 	RUNNING=1
 };
 
-static cv::Mat _kalman=cv::Mat::zeros(Camera::height,Camera::width,CV_8UC3);
+static cv::Mat _kalman=cv::Mat::zeros(WORK_H,WORK_W,CV_8UC3);
 static cv::KalmanFilter KF(4,2,0);
 static cv::Mat_<float> measurement(2,1);
 static std::vector<cv::Point> positionv, kalmanv;

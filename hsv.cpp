@@ -46,7 +46,7 @@ void HSV_Thresholder::autoSet(Mat& img) {
 	//Mat hsv(img,Rect(Camera::width/2-autoSetRadius/**4/sqrt(2)*/,Camera::height/2-autoSetRadius/**4/sqrt(2)*/,autoSetRadius*2/*8/sqrt(2)*/,autoSetRadius*2/*8/sqrt(2)*/)); //*4,*4,*8,*8
 	//Mat hsv(img,Rect(320,240,640,480));
 	//Mat hsv(img,Rect(Camera::width/2-100,Camera::height/2-100,200,200));
-	Mat hsv(img,Rect(Camera::width/2-100/sqrt(2),Camera::height/2-100/sqrt(2),2*100/sqrt(2),2*100/sqrt(2)));
+	Mat hsv(img,Rect(Camera::width/2-HSV_AUTOSET_RADIUS/sqrt(2),Camera::height/2-HSV_AUTOSET_RADIUS/sqrt(2),2*HSV_AUTOSET_RADIUS/sqrt(2),2*HSV_AUTOSET_RADIUS/sqrt(2)));
 	imshow("Debug",hsv);
 	cvtColor(hsv,hsv,CV_BGR2HSV);
 	
@@ -56,14 +56,27 @@ void HSV_Thresholder::autoSet(Mat& img) {
 	double min,max;
 
 	minMaxIdx(channels[0],&min,&max);
+	min-=HSV_RANGE_EXTEND;
+	if(min<0) min=0;
+	max+=HSV_RANGE_EXTEND;
+	if(max>255) max=255;
 	_params["H min"]=min;
 	_params["H max"]=max;
 
 	minMaxIdx(channels[1],&min,&max);
+	min-=HSV_RANGE_EXTEND/**10*/;
+	if(min<0) min=0;
+	max+=HSV_RANGE_EXTEND/**10*/;
+	if(max>255) max=255;
+	max=255;
 	_params["S min"]=min;
 	_params["S max"]=max;
 	
 	minMaxIdx(channels[2],&min,&max);
+	min-=HSV_RANGE_EXTEND/**7*/;
+	if(min<0) min=0;
+	max+=HSV_RANGE_EXTEND/**7*/;
+	if(max>255) max=255;
 	_params["V min"]=min;
 	_params["V max"]=max;
 	

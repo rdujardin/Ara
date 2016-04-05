@@ -29,11 +29,13 @@ public:
 
 	double get(Timable* obj);
 	double total();
+
+	static void wait(unsigned int ms);
 private:
 	std::map<Timable*, clock_t> _timers;
 	clock_t _total;
 
-	double toMilliseconds(clock_t timer);
+	static double toMilliseconds(clock_t timer);
 };
 
 #endif

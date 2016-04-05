@@ -35,12 +35,15 @@ BotController::BotController(bool withBot,bool withGui,bool adjustable) : Adjust
 			makeAdjustable("Z = ",70);
 		}
 	}
+
+	startUpRoutine();
+}
+
+BotController::~BotController() {
+	shutDownRoutine();
 }
 
 bool BotController::loop(Position detection) {
-
-	Mat draw1=Mat::zeros(_drawHeight,_drawWidth,CV_8UC3);
-	Mat draw2=Mat::zeros(_drawHeight,_drawWidth,CV_8UC3);
 
 	if(!_withGui && _adjustable) {
 		cout << "X ? ";
@@ -82,35 +85,9 @@ bool BotController::loop(Position detection) {
 	_alpha1=atan2(sinAlpha1,cosAlpha1);
 	_alpha2=atan2(sinAlpha2,cosAlpha2);
 	_alpha3=_terminalAbsAlpha-_alpha1-_alpha2;
-	
-	if(_withGui) {
-		//Draw axis
-		drawAxis(draw1,draw2);
-		
-		//Draw bot
-		drawBot(draw1,draw2);
-		
-		imshow("Bras (vue de cote)",draw1);
-		imshow("Bras (vue de haut)",draw2);
-		//if(waitKey(30)>=0) return false;
-	}
-	else {
-		cout << "alpha1 = " << _alpha1*180/M_PI << endl;
-		cout << "alpha2 = " << _alpha2*180/M_PI << endl;
-		cout << "alpha3 = " << _alpha3*180/M_PI << endl;
-		cout << "theta0 = " << _theta0*180/M_PI << endl;
-		cout << "theta3 = " << _theta3*180/M_PI << endl;
-		cout << "-------------------------" << endl;
-	}
 
-	//double angle_test(__alpha0);
-	if(sqrt(_terminalXTh*_terminalXTh+_terminalY*_terminalY)<=_length1+_length2+_length3 && sqrt(_terminalX*_terminalX+_terminalZ*_terminalZ)<=_length1+_length2+_length3) sendToMotors();
+	return loopAngles();
 	
-	if(_adjustable) {
-		if (waitKey(30) >= 0) return false;
-	}
-	
-	return true;
 }
 
 void BotController::drawAxis(Mat& draw1,Mat& draw2) {
@@ -223,5 +200,88 @@ void BotController::adjusted(std::string name,int val) {
 	_terminalX=_params["X = "];
 	_terminalY=_params["Y = "];
 	_terminalZ=_params["Z = "];
+}
+
+bool BotController::loopAngles() {
+	Mat draw1=Mat::zeros(_drawHeight,_drawWidth,CV_8UC3);
+	Mat draw2=Mat::zeros(_drawHeight,_drawWidth,CV_8UC3);
+
+	if(_withGui) {
+		//Draw axis
+		drawAxis(draw1,draw2);
+		
+		//Draw bot
+		drawBot(draw1,draw2);
+		
+		imshow("Bras (vue de cote)",draw1);
+		imshow("Bras (vue de haut)",draw2);
+		//if(waitKey(30)>=0) return false;
+	}
+	else {
+		cout << "alpha1 = " << _alpha1*180/M_PI << endl;
+		cout << "alpha2 = " << _alpha2*180/M_PI << endl;
+		cout << "alpha3 = " << _alpha3*180/M_PI << endl;
+		cout << "theta0 = " << _theta0*180/M_PI << endl;
+		cout << "theta3 = " << _theta3*180/M_PI << endl;
+		cout << "-------------------------" << endl;
+	}
+
+	//double angle_test(__alpha0);
+	if(sqrt(_terminalXTh*_terminalXTh+_terminalY*_terminalY)<=_length1+_length2+_length3 && sqrt(_terminalX*_terminalX+_terminalZ*_terminalZ)<=_length1+_length2+_length3) sendToMotors();
+	
+	if(_adjustable) {
+		if (waitKey(30) >= 0) return false;
+	}
+	
+	return true;
+}
+
+void BotController::startUpRoutine() {
+
+	//Etat du bras : type BotState
+	//angle de la base : [0] ou .base
+	//angle de l'épaule : [1] ou .shou
+	//angle du coude : [2] ou .elbo
+	//angle du poignet (roulis) : [3] ou .wris
+	//angle du poignet (lacet) : [4] ou .wrisTh
+
+	BotState idlePos(90,150,-170,160,90); //Position de repos (base,épaule,coude,poignet roulis,poignet lacet)
+	BotState readyPos(90,70,-90,0,0); //Position à atteindre pour démarrer, poignet roulis peu importe..
+	readyPos[3]=_terminalAbsAlpha-readyPos[1]-readyPos[2]; //..car déduit ici
+
+	vector<BotState> trajectory;
+	trajectory.push_back(idlePos);
+
+	//Calculate
+	//coude : .elbo
+	for(double elbo=idlePos.elbo;elbo<=readyPos.elbo;++elbo) {
+		trajectory.push_back(BotState(idlePos[0],idlePos[1],elbo,idlePos[3],idlePos[4]));
+	}
+
+	//épaule : .shou
+	for(double shou=idlePos.shou;shou>=readyPos.shou;--shou) {
+		trajectory.push_back(BotState(idlePos[0],shou,readyPos[2],idlePos[3],idlePos[4]));
+	}
+
+	//Print
+	cout << "££££££££" << endl;
+	for(vector<BotState>::iterator it=trajectory.begin();it!=trajectory.end();++it) {
+		cout << (*it)[0] << " / " << (*it)[1] << " / " << (*it)[2] << " / " << (*it)[3] << " / " << (*it)[4] << endl;
+	}
+
+	//Execute
+	for(vector<BotState>::iterator it=trajectory.begin();it!=trajectory.end();++it) {
+		_theta0=(*it)[0]*M_PI/180;
+		_alpha1=(*it)[1]*M_PI/180;
+		_alpha2=(*it)[2]*M_PI/180;
+		_alpha3=(*it)[3]*M_PI/180;
+		_theta3=(*it)[4]*M_PI/180;
+		loopAngles();
+		Timer::wait(20);
+	}
+}
+
+void BotController::shutDownRoutine() {
+	
 }
 

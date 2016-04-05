@@ -3,12 +3,14 @@
 
 #include <opencv2/opencv.hpp>
 
+#include "common.h"
 #include "timer.h"
 #include "adjustable.h"
 
 struct Detection {
 	cv::RotatedRect ellipseRect;
 	int x,y,radius;
+	bool valid;
 };
 
 typedef std::vector<Detection> DetectionList;

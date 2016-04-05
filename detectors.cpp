@@ -72,9 +72,11 @@ void MomentsCalculator::apply(Mat& img,Mat& drawOut,DetectionList& out) {
 	Detection d;
 	d.x=m.m10/m.m00;
 	d.y=m.m01/m.m00;
-	d.radius=30;
+	d.radius=m.m00/*30*/;
 //	d.ellipseRect=
-	out.push_back(d);
+	if(d.x<0 || d.x>WORK_W || d.y<0 || d.y>WORK_H) d.valid=false;
+	else d.valid=true;
+	if(d.valid) out.push_back(d);
 
 	timerStop();
 

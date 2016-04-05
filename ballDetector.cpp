@@ -36,7 +36,7 @@ BallDetector::BallDetector(bool withBallPlacing,bool withGeneralSettings,bool wi
 
 	//KALMAN
 	pourcent=0;
-	centre=Point(2*320,2*240);
+	centre=Point(WORK_W/2,WORK_H/2);
 	//Initialisation of the filter
 	KF.transitionMatrix=(Mat_<float>(4,4) << 1,0,1,0, 0,1,0,1, 0,0,0.6,0, 0,0,0,0.6); //Sans * au début de la parenthèse
 	measurement.setTo(Scalar(0));
@@ -117,7 +117,7 @@ bool BallDetector::loop(Position& detection) {
 	vector<Point> position_filtered(1); //?
 
 	if(_state==PLACE_BALL) {
-		circle(resized,Point(WORK_W/2,WORK_H/2),/*HSV_Thresholder::autoSetRadius*/100,Scalar(0,0,255),4);
+		circle(resized,Point(WORK_W/2,WORK_H/2),HSV_AUTOSET_RADIUS,Scalar(0,0,255),4);
 		Mat flipped(WORK_W,WORK_H,CV_8UC3);
 		flip(resized,flipped,1);
 	
@@ -138,6 +138,7 @@ bool BallDetector::loop(Position& detection) {
 		_gaussianFilter->apply(resized);
 
 		_hsvThresholder->apply(resized, output);
+		//r=R*255/(R+V+B) ; b=B*255/(R+V+B) ; b>r ? ..
 
 		if(_withGui) imshow("Hsv", output);
 
@@ -147,7 +148,33 @@ bool BallDetector::loop(Position& detection) {
 		//_ellipseFitter->apply(output,resized,detections);
 		_momentsDetector->apply(output,resized,detections);
 		
-		double detX=0,detY=0,detR=-1;
+		double detX=0,detY=0,detR=-1,detValid=false;
+		if(!detections.empty()) {
+			for(DetectionList::const_iterator it=detections.begin();it!=detections.end();++it) {
+				if(it->valid) {
+					detX+=it->x;
+					detY+=it->y;
+					if(it->radius>detR) detR=it->radius;
+				}			
+			}
+			if(detX<0 || detX>WORK_W || detY<0 || detY>WORK_H || detR<=0) detValid=false;
+			else detValid=true;
+		}
+
+		if(detValid) {
+			double z=_cam->focal*ballRadius/(2*((double) sqrt(detR)/2)*4*_cam->pixelSize);
+			detection.z=z*100;
+			Mat filtered_position=kalmanFilter(detX,detY);
+			detection.x=100*((((double) filtered_position.at<float>(0))*2-WORK_W)*_cam->pixelSize*z/_cam->focal);
+			detection.y=100*((WORK_H-((double) filtered_position.at<float>(1))*2)*_cam->pixelSize*z/_cam->focal);
+			detection.valid=true;
+			ostringstream oss;
+			oss << " (" << detection.x << "," << detection.y << "," << sqrt(detR)/2 << "," << string((detection.valid)?"VALID":"NOPE") << ")";
+			putText(resized,oss.str(),Point(10,10),1,1,Scalar(255,0,0),1);
+		}
+		else detection.valid=false;
+
+		/*double detX=0,detY=0,detR=-1;
 		for(DetectionList::const_iterator it=detections.begin();it!=detections.end();++it) {
 			detX+=it->x;
 			detY+=it->y;
@@ -156,8 +183,6 @@ bool BallDetector::loop(Position& detection) {
 		detX/=detections.size();
 		detY/=detections.size();
 
-		Position pos;
-		
 		if(!detections.empty()) {
 			double z=_cam->focal*ballRadius/(2*((double) detR)*4*_cam->pixelSize);
 			detection.z=z*100;
@@ -166,7 +191,10 @@ bool BallDetector::loop(Position& detection) {
 			Mat filtered_position=kalmanFilter(detX,detY); //?
 			detection.x=100*((((double) filtered_position.at<float>(0))*4-640)*_cam->pixelSize*z/_cam->focal); //detX
 			detection.y=100*((480-((double) filtered_position.at<float>(1))*4)*_cam->pixelSize*z/_cam->focal); //detY
+			if(detection.x<0 || detection.x>WORK_W || detection.y<0 || detection.y>WORK_H) detection.valid=false;
+			else detection.valid=true;
 		}
+		else detection.valid=false;*/
 
 		if(_withGui) {
 			imshow("Input", resized);
@@ -194,8 +222,8 @@ cv::Mat BallDetector::kalmanFilter(double posx,double posy) {
 	Mat prediction=KF.predict();
 	Point predictPt(prediction.at<float>(0),prediction.at<float>(1));
 	//Get ball position
-	measurement(0)=2*posx;
-	measurement(1)=2*posy;
+	measurement(0)=posx;
+	measurement(1)=posy;
 	//The update phase
 	Mat estimated=KF.correct(measurement);
 
@@ -212,22 +240,18 @@ cv::Mat BallDetector::kalmanFilter(double posx,double posy) {
 		kalmanv.erase(kalmanv.begin());
 		_kalman=Scalar::all(0);
 	}
-	drawCross(statePt,Scalar(255,255,255),5);
-	drawCross(measPt,Scalar(0,0,255),5);
 
 	for(int i=0;i<positionv.size()-1;i++) {
 		line(_kalman,positionv[i],positionv[i+1],Scalar(255,255,0),1);
-		cout << "brut = " << positionv[i];
 	}
 
 	for(int i=0;i<kalmanv.size();i++) {
-		line(_kalman,kalmanv[i],kalmanv[i+1],Scalar(0,0,255),1);
-		cout << "_kalman = " << kalmanv[i] << endl;
+		if(positionv.size()>=50) line(_kalman,kalmanv[i],kalmanv[i+1],Scalar(0,0,255),1);
 	}
 
-	if(posx>2*320+40 || posx<2*320-40) {
+	if(posx>WORK_W/2+40 || posx<WORK_H/2-40) {
 		//circle(_kalman,centre,2*abs(320-posx),Scalar(0,0,255),1,1,1);
-		pourcent=2*abs(320-posx)*100/(_kalman.cols); //2*Eloignement / largeur_image %
+		pourcent=abs(WORK_W/2-posx)*100/(_kalman.cols); //2*Eloignement / largeur_image %
 		cout << "Puissance moteur = " << pourcent << "%" << endl;
 		//putText(im,"TEST",centre,5,10,0,Scalar(0,0,255));
 	}

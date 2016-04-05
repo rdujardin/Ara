@@ -5,8 +5,10 @@
 #include <mutex>
 #include <iostream>
 #include <queue>
+#include <ctime>
 
 struct Position {
+	bool valid;
 	double x,y,z;
 };
 

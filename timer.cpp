@@ -45,14 +45,19 @@ double Timer::get(Timable* obj) {
 		throw "Timable not found !";
 		return -1;
 	}*/
-	return toMilliseconds(_timers[obj]);
+	return Timer::toMilliseconds(_timers[obj]);
 }
 
 double Timer::total() {
-	return toMilliseconds(_total);
+	return Timer::toMilliseconds(_total);
 }
 
 double Timer::toMilliseconds(clock_t timer) {
 	return ((double)timer) / CLOCKS_PER_SEC * 1000;
+}
+
+void Timer::wait(unsigned int ms) {
+	double t=Timer::toMilliseconds(clock());
+	while(Timer::toMilliseconds(clock())-t<ms);
 }
 
