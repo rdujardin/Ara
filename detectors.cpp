@@ -52,11 +52,11 @@ void drawDetections(Mat& dst,DetectionList& detect) {
 		circle(dst,center,it->radius,Scalar(color,0,255-color),3);
 		if(color<=250) color+=50;
 		
-		Point2f rectVertices[4];
+		/*Point2f rectVertices[4];
 		it->ellipseRect.points(rectVertices);
 		for(int i=0;i<4;i++) {
 			line(dst,rectVertices[i],rectVertices[(i+1)%4],Scalar(0,255,0));
-		}
+		}*/
 	}
 }
 
@@ -80,7 +80,7 @@ void MomentsCalculator::apply(Mat& img,Mat& drawOut,DetectionList& out) {
 
 	timerStop();
 
-	drawDetections(drawOut,out);
+	//drawDetections(drawOut,out);
 }
 
 void MomentsCalculator::operator()(Mat& img,Mat& drawOut,DetectionList& out) {

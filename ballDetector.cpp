@@ -140,7 +140,11 @@ bool BallDetector::loop(Position& detection) {
 		_hsvThresholder->apply(resized, output);
 		//r=R*255/(R+V+B) ; b=B*255/(R+V+B) ; b>r ? ..
 
-		if(_withGui) imshow("Hsv", output);
+
+
+		_gaussianFilter->apply(output);
+
+				if(_withGui) imshow("Hsv", output);
 
 		_dilateEroder->apply(output);
 	
@@ -162,7 +166,7 @@ bool BallDetector::loop(Position& detection) {
 		}
 
 		if(detValid) {
-			double z=_cam->focal*ballRadius/(2*((double) sqrt(detR)/2)*4*_cam->pixelSize);
+			double z=_cam->focal*ballRadius/(2*((double) sqrt(detR)/2*1.5)*4*_cam->pixelSize); //*1.5 : empirique (on considère qu'on a en général les deux tiers de la balle)
 			detection.z=z*100;
 			Mat filtered_position=kalmanFilter(detX,detY);
 			detection.x=100*((((double) filtered_position.at<float>(0))*2-WORK_W)*_cam->pixelSize*z/_cam->focal);
@@ -171,6 +175,15 @@ bool BallDetector::loop(Position& detection) {
 			ostringstream oss;
 			oss << " (" << detection.x << "," << detection.y << "," << sqrt(detR)/2 << "," << string((detection.valid)?"VALID":"NOPE") << ")";
 			putText(resized,oss.str(),Point(10,10),1,1,Scalar(255,0,0),1);
+
+			DetectionList outDetections;
+			Detection outD;
+			outD.x=detX;
+			outD.y=detY;
+			outD.radius=sqrt(detR)/2*1.5; //*1.5 : empirique (on considère qu'on a en général les deux tiers de la balle)
+			outD.valid=true;
+			outDetections.push_back(outD);
+			drawDetections(resized,outDetections);
 		}
 		else detection.valid=false;
 
