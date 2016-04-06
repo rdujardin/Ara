@@ -15,7 +15,7 @@ struct Detection {
 
 typedef std::vector<Detection> DetectionList;
 
-void drawDetections(cv::Mat& dst,DetectionList& detect);
+void drawDetections(cv::Mat& dst,DetectionList& detect,bool ellipses);
 
 //------------------------------------------------------------------------------
 

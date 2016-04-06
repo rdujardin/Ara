@@ -39,8 +39,8 @@ DilateEroder::DilateEroder(Timer& timer, bool adjustable) : Timable(timer), Adju
 	
 	_params["Dilate size"]=4;//8 //2
 	_params["Erode size"]=4;//8 //2
-	_params["Dilate iterations"]=7; //2
-	_params["Erode iterations"]=7; //5
+	_params["Dilate iterations"]=1; //2 //7
+	_params["Erode iterations"]=1; //5 //7
 	
 	if(adjustable) {
 		makeAdjustable("Dilate size",40);

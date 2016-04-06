@@ -32,7 +32,7 @@ static std::vector<cv::Point> positionv, kalmanv;
 
 class BallDetector {
 	public:
-		BallDetector(bool withBallPlacing,bool withGeneralSettings,bool withCamSettings,bool withGui,bool withBenchmarking);
+		BallDetector(Mode mode,bool withBot,bool withBallPlacing,bool withGeneralSettings,bool withCamSettings,bool withGui,bool withBenchmarking);
 		~BallDetector();
 
 		bool loop(Position& detection);
@@ -57,6 +57,9 @@ class BallDetector {
 		std::map<std::string,Timable*> _timables;
 
 		cv::Mat kalmanFilter(double posx,double posy);
+
+		Mode _mode;
+		bool _withBot;
 };
 
 #endif

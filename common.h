@@ -7,6 +7,12 @@
 #include <queue>
 #include <ctime>
 
+enum Mode {
+	ALL,
+	ONLY_DETECTION,
+	ONLY_CONTROL
+};
+
 struct Position {
 	bool valid;
 	double x,y,z;

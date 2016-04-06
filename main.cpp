@@ -7,12 +7,6 @@
 
 using namespace std;
 
-enum Mode {
-	ALL,
-	ONLY_DETECTION,
-	ONLY_CONTROL
-};
-
 void readArgs(int argc,char* argv[],Mode& mode,bool& withBot);
 
 int main(int argc,char* argv[]) {
@@ -26,8 +20,8 @@ int main(int argc,char* argv[]) {
 	activatedWindows["Bras (vue de haut)"]=(mode!=ONLY_DETECTION);
 
 	BallDetector* ballDetector=NULL;
-	if(mode!=ONLY_CONTROL) ballDetector=new BallDetector(mode!=ONLY_CONTROL,mode==ONLY_DETECTION,mode==ONLY_DETECTION,mode!=ONLY_CONTROL,mode==ONLY_DETECTION);
-	BotController* botController=new BotController(withBot,mode!=ONLY_DETECTION,mode==ONLY_CONTROL);
+	if(mode!=ONLY_CONTROL) ballDetector=new BallDetector(mode,withBot,mode!=ONLY_CONTROL,mode==ONLY_DETECTION,mode==ONLY_DETECTION,mode!=ONLY_CONTROL,mode==ONLY_DETECTION);
+	BotController* botController=new BotController(mode,withBot,mode!=ONLY_DETECTION,mode==ONLY_CONTROL);
 
 	while(true) {
 		Position pos;

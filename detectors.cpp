@@ -33,7 +33,7 @@ void EllipseFitter::apply(Mat& img,DetectionList& out) {
 
 void EllipseFitter::apply(Mat& img,Mat& dst,DetectionList& out) {
 	apply(img,out);
-	drawDetections(dst,out);
+	//drawDetections(dst,out,true);
 }
 
 void EllipseFitter::operator()(Mat& img,DetectionList& out) {
@@ -44,7 +44,7 @@ void EllipseFitter::operator()(Mat& img,Mat& dst,DetectionList& out) {
 	apply(img,dst,out);
 }
 
-void drawDetections(Mat& dst,DetectionList& detect) {
+void drawDetections(Mat& dst,DetectionList& detect,bool ellipses) {
 	unsigned int color=0;
 	for(DetectionList::const_iterator it=detect.begin();it!=detect.end();++it) {
 		Point center(round(it->x),round(it->y));
@@ -52,11 +52,13 @@ void drawDetections(Mat& dst,DetectionList& detect) {
 		circle(dst,center,it->radius,Scalar(color,0,255-color),3);
 		if(color<=250) color+=50;
 		
-		/*Point2f rectVertices[4];
-		it->ellipseRect.points(rectVertices);
-		for(int i=0;i<4;i++) {
-			line(dst,rectVertices[i],rectVertices[(i+1)%4],Scalar(0,255,0));
-		}*/
+		if(ellipses) {
+			Point2f rectVertices[4];
+			it->ellipseRect.points(rectVertices);
+			for(int i=0;i<4;i++) {
+				line(dst,rectVertices[i],rectVertices[(i+1)%4],Scalar(0,255,0));
+			}
+		}
 	}
 }
 

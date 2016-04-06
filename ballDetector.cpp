@@ -3,7 +3,10 @@
 using namespace std;
 using namespace cv;
 
-BallDetector::BallDetector(bool withBallPlacing,bool withGeneralSettings,bool withCamSettings,bool withGui,bool withBenchmarking) {
+BallDetector::BallDetector(Mode mode,bool withBot,bool withBallPlacing,bool withGeneralSettings,bool withCamSettings,bool withGui,bool withBenchmarking) {
+	_mode=mode;
+	_withBot=withBot;
+
 	_withGui=withGui;
 	_withBenchmarking=withBenchmarking;
 	_state=(withBallPlacing)?PLACE_BALL:RUNNING;
@@ -142,17 +145,17 @@ bool BallDetector::loop(Position& detection) {
 
 
 
-		_gaussianFilter->apply(output);
+		//_gaussianFilter->apply(output);
 
 				if(_withGui) imshow("Hsv", output);
 
 		_dilateEroder->apply(output);
 	
 		DetectionList detections;
-		//_ellipseFitter->apply(output,resized,detections);
-		_momentsDetector->apply(output,resized,detections);
+		_ellipseFitter->apply(output,resized,detections); //switch ellipse/moments : switcher le true/false line 186 (true pour ellipses)
+		//_momentsDetector->apply(output,resized,detections);
 		
-		double detX=0,detY=0,detR=-1,detValid=false;
+		/*double detX=0,detY=0,detR=-1,detValid=false;
 		if(!detections.empty()) {
 			for(DetectionList::const_iterator it=detections.begin();it!=detections.end();++it) {
 				if(it->valid) {
@@ -183,11 +186,13 @@ bool BallDetector::loop(Position& detection) {
 			outD.radius=sqrt(detR)/2*1.5; //*1.5 : empirique (on considère qu'on a en général les deux tiers de la balle)
 			outD.valid=true;
 			outDetections.push_back(outD);
-			drawDetections(resized,outDetections);
+			drawDetections(resized,outDetections,true);
 		}
-		else detection.valid=false;
+		else detection.valid=false;*/
 
-		/*double detX=0,detY=0,detR=-1;
+		//OLD ELLIPSES CODE BEGIN
+		drawDetections(resized,detections,true);
+		double detX=0,detY=0,detR=-1;
 		for(DetectionList::const_iterator it=detections.begin();it!=detections.end();++it) {
 			detX+=it->x;
 			detY+=it->y;
@@ -207,7 +212,8 @@ bool BallDetector::loop(Position& detection) {
 			if(detection.x<0 || detection.x>WORK_W || detection.y<0 || detection.y>WORK_H) detection.valid=false;
 			else detection.valid=true;
 		}
-		else detection.valid=false;*/
+		else detection.valid=false;
+		//OLD ELLIPSES CODE END
 
 		if(_withGui) {
 			imshow("Input", resized);
