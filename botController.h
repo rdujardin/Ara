@@ -56,7 +56,7 @@ class BotController : public Adjustable {
 		
 		virtual void adjusted(std::string name,int val);
 	private:
-		static constexpr double _terminalAbsAlpha=20*M_PI/180;
+		static constexpr double _terminalAbsAlpha=-1*M_PI/180;
 		static constexpr double _terminalAbsTheta=0.01*M_PI/180;
 		static constexpr double _length1=30;
 		static constexpr double _length2=30;

@@ -270,8 +270,8 @@ void BotController::startUpRoutine() {
 	//BotState end(90,100,-90,160,0);
 	BotState end;
 	end.push_back(90); //90
-	end.push_back(145); //145
-	end.push_back(-123); //-123
+	end.push_back(140); //145
+	end.push_back(-107); //-123
 	end.push_back(0); //-1.7
 	end.push_back(0); //0
 	end[3]=_terminalAbsAlpha-end[1]-end[2];
@@ -319,6 +319,7 @@ void BotController::startUpRoutine() {
 		_alpha3=(*it)[3]*M_PI/180;
 		_theta3=(*it)[4]*M_PI/180;
 		_length3Al=_length3*cos(_theta3);
+		//_wristX=(-_length3*sin(_theta3)+_length3*cos(_terminalAbsAlpha)*sin(_terminalAbsTheta))/cos(_theta0);
 		loopAngles();
 		Timer::wait(20);
 	}
@@ -329,8 +330,8 @@ void BotController::shutDownRoutine() {
 	
 
 	start.push_back(90);
-	start.push_back(145);
-	start.push_back(-123);
+	start.push_back(140);
+	start.push_back(-107);
 	start.push_back(0);
 	start.push_back(0);
 	//BotState end(90,100,-90,160,0);
@@ -366,6 +367,10 @@ void BotController::shutDownRoutine() {
 			current[4]+=3;
 			trajectory.push_back(current);
 		}
+		else if(current[3]<end[3]) {
+			current[3]+=3;
+			trajectory.push_back(current);
+		}
 		else {
 			cout << "BIS ";
 			if((current[2]>end[2])) current[2]--;
@@ -386,6 +391,7 @@ void BotController::shutDownRoutine() {
 		_alpha3=(*it)[3]*M_PI/180;
 		_theta3=(*it)[4]*M_PI/180;
 		_length3Al=_length3*cos(_theta3);
+		//_wristX=(_terminalX+_length3*cos(_terminalAbsAlpha)*sin(_terminalAbsTheta))/cos(_theta0);
 		loopAngles();
 		Timer::wait(20);
 	}
