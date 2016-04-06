@@ -214,7 +214,7 @@ void BotController::sendToMotors() {
 void BotController::adjusted(std::string name,int val) {
 	_params[name]=val;
 	_terminalX=(_params["X = "]-70)/2;
-	_terminalY=_params["Y = "]/2;
+	_terminalY=_params["Y = "];
 	_terminalZ=(_params["Z = "]-40)/2;
 }
 
@@ -224,6 +224,7 @@ bool BotController::loopAngles() {
 
 	bool workZoneCheck=sqrt(_terminalXTh*_terminalXTh+_terminalY*_terminalY)<=_length1+_length2+_length3 && sqrt(_terminalX*_terminalX+_terminalZ*_terminalZ)<=_length1+_length2+_length3;
 	workZoneCheck=workZoneCheck && (_theta0<140 && _alpha1<140);
+	workZoneCheck=workZoneCheck && (_terminalZ > 20);
 
 	if(_withGui) {
 		//Draw axis
@@ -264,7 +265,7 @@ void BotController::startUpRoutine() {
 	start.push_back(90);
 	start.push_back(180);
 	start.push_back(-170);
-	start.push_back(160);
+	start.push_back(0); //160
 	start.push_back(90);
 	//BotState end(90,100,-90,160,0);
 	BotState end;
@@ -317,6 +318,7 @@ void BotController::startUpRoutine() {
 		_alpha2=(*it)[2]*M_PI/180;
 		_alpha3=(*it)[3]*M_PI/180;
 		_theta3=(*it)[4]*M_PI/180;
+		_length3Al=_length3*cos(_theta3);
 		loopAngles();
 		Timer::wait(20);
 	}
@@ -327,16 +329,16 @@ void BotController::shutDownRoutine() {
 	
 
 	start.push_back(90);
-	start.push_back(100);
-	start.push_back(-90);
-	start.push_back(160);
+	start.push_back(145);
+	start.push_back(-123);
+	start.push_back(0);
 	start.push_back(0);
 	//BotState end(90,100,-90,160,0);
 	BotState end;
 	end.push_back(90);
 	end.push_back(180);
 	end.push_back(-170);
-	end.push_back(160);
+	end.push_back(0);
 	end.push_back(90);
 	
 	start[3]=_terminalAbsAlpha-start[1]-start[2];
@@ -351,7 +353,11 @@ void BotController::shutDownRoutine() {
 	double halfElbo=start[2]+((end[2]-start[2])/2);
 
 	while(!finished) {
-		if((current[2]>halfElbo)) {
+		if(current[1]<end[1]) {
+			current[1]++;
+			trajectory.push_back(current);
+		}
+		else if((current[2]>halfElbo)) {
 			current[2]--;
 			trajectory.push_back(current);
 			cout << current[0] << " / " << current[1] << " / " << current[2] << " / " << current[3] << " / " << current[4] << endl;
@@ -379,6 +385,7 @@ void BotController::shutDownRoutine() {
 		_alpha2=(*it)[2]*M_PI/180;
 		_alpha3=(*it)[3]*M_PI/180;
 		_theta3=(*it)[4]*M_PI/180;
+		_length3Al=_length3*cos(_theta3);
 		loopAngles();
 		Timer::wait(20);
 	}

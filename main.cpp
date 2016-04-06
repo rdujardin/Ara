@@ -26,7 +26,13 @@ int main(int argc,char* argv[]) {
 	while(true) {
 		Position pos;
 		if(mode!=ONLY_CONTROL) if(!ballDetector->loop(pos)) break;
-		cout << "####POSITION " << pos.x << " / " << pos.y << " / " << pos.z << endl;
+		cout << "####POSITION(cam) " << pos.x << " / " << pos.y << " / " << pos.z << endl;
+		double horizAngle=0;
+		//Horizon rotation :
+		double tmpY=pos.y;
+		pos.y=cos(horizAngle)*tmpY-sin(horizAngle)*pos.z;
+		pos.z=sin(horizAngle)*tmpY+cos(horizAngle)*pos.z;
+		cout << "####POSITION(bot) " << pos.x << " / " << pos.y << " / " << pos.z << endl;
 		if(!botController->loop(pos)) break;
 	}
 
