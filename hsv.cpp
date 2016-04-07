@@ -60,8 +60,8 @@ void HSV_Thresholder::autoSet(Mat& img) {
 	if(min<0) min=0;
 	max+=HSV_RANGE_EXTEND;
 	if(max>255) max=255;
-	_params["H min"]=min;
-	_params["H max"]=max;
+	_params["H min"]=37; //min
+	_params["H max"]=84; //max
 
 	minMaxIdx(channels[1],&min,&max);
 	min-=HSV_RANGE_EXTEND/**10*/;
@@ -69,16 +69,16 @@ void HSV_Thresholder::autoSet(Mat& img) {
 	max+=HSV_RANGE_EXTEND/**10*/;
 	if(max>255) max=255;
 	max=255;
-	_params["S min"]=min;
-	_params["S max"]=max;
+	_params["S min"]=52; //min
+	_params["S max"]=255; //max
 	
 	minMaxIdx(channels[2],&min,&max);
 	min-=HSV_RANGE_EXTEND/**7*/;
 	if(min<0) min=0;
 	max+=HSV_RANGE_EXTEND/**7*/;
 	if(max>255) max=255;
-	_params["V min"]=min;
-	_params["V max"]=max;
+	_params["V min"]=96; //min
+	_params["V max"]=255; //max
 	
 	createUi();
 	

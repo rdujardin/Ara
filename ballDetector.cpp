@@ -10,16 +10,29 @@ BallDetector::BallDetector(Mode mode,bool withBot,bool withBallPlacing,bool with
 	_withGui=withGui;
 	_withBenchmarking=withBenchmarking;
 	_state=(withBallPlacing)?PLACE_BALL:RUNNING;
+
+		if(withGeneralSettings) {
+		cv::namedWindow("Settings", 3);
+		moveWindow("Settings",200,40);
+	}
+	if(withCamSettings) {
+		cv::namedWindow("Camera Settings", 5);
+		moveWindow("Camera Settings",840,40);
+	}
 	
 	if(_withGui) {
 		cv::namedWindow("Input", 1);
 		cv::namedWindow("Output", 1);
 		cv::namedWindow("Hsv", 1);
 		cv::namedWindow("Debug",1);
+		cv::namedWindow("2D Position",1);
 		if(withGeneralSettings) {
-			moveWindow("Input",520,40);
+			/*moveWindow("Input",520,40);
 			moveWindow("Hsv",520,308);
-			moveWindow("Output",520,576);
+			moveWindow("Output",520,576);*/
+			moveWindow("Input",0,0);
+			moveWindow("Hsv",700,0);
+			moveWindow("2D Position",1200,0);
 		}
 		else {
 			moveWindow("Input",10,10);
@@ -28,14 +41,7 @@ BallDetector::BallDetector(Mode mode,bool withBot,bool withBallPlacing,bool with
 		}
 	}
 
-	if(withGeneralSettings) {
-		cv::namedWindow("Settings", 3);
-		moveWindow("Settings",200,40);
-	}
-	if(withCamSettings) {
-		cv::namedWindow("Camera Settings", 5);
-		moveWindow("Camera Settings",840,40);
-	}
+
 
 	//KALMAN
 	pourcent=0;

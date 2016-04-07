@@ -23,8 +23,10 @@ BotController::BotController(Mode mode,bool withBot,bool withGui,bool adjustable
 		namedWindow("Bras (vue de cote)",1);
 		namedWindow("Bras (vue de haut)",1);
 	
-		moveWindow("Bras (vue de cote)",0,300);
-		moveWindow("Bras (vue de haut)",640,300);
+		//moveWindow("Bras (vue de cote)",0,300);
+		//moveWindow("Bras (vue de haut)",640,300);
+		moveWindow("Bras (vue de cote)",0,600);
+		moveWindow("Bras (vue de haut)",740,600);
 		
 		_params["X = "]=_terminalX*2+70;
 		_params["Y = "]=_terminalY;
@@ -49,7 +51,7 @@ BotController::~BotController() {
 
 bool BotController::loop(Position detection) {
 
-	if(!_withGui && _adjustable) {
+	/*if(!_withGui && _adjustable) {
 		cout << "X ? ";
 		cin >> _inputX;
 		if(_inputX==_strCliQuit) return false;
@@ -68,7 +70,11 @@ bool BotController::loop(Position detection) {
 		_terminalX=detection.x;
 		_terminalY=detection.y;
 		_terminalZ=detection.z;
-	}
+	}*/
+
+	_terminalX=detection.x;
+	_terminalY=detection.y;
+	_terminalZ=detection.z;
 	
 	cout << "X : " << _terminalX << " / Y : " << _terminalY << " / Z : " << _terminalZ << endl;
 

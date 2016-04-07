@@ -14,25 +14,27 @@ int main(int argc,char* argv[]) {
 	bool withBot;
 	readArgs(argc,argv,mode,withBot);
 	
-	activatedWindows["Settings"]=(mode==ONLY_DETECTION);
-	activatedWindows["Camera Settings"]=(mode==ONLY_DETECTION);
-	activatedWindows["Bras (vue de cote)"]=(mode!=ONLY_DETECTION);
-	activatedWindows["Bras (vue de haut)"]=(mode!=ONLY_DETECTION);
+	activatedWindows["Settings"]=true/*(mode==ONLY_DETECTION)*/;
+	activatedWindows["Camera Settings"]=true/*(mode==ONLY_DETECTION)*/;
+	activatedWindows["Bras (vue de cote)"]=true/*(mode!=ONLY_DETECTION)*/;
+	activatedWindows["Bras (vue de haut)"]=true/*(mode!=ONLY_DETECTION)*/;
 
 	BallDetector* ballDetector=NULL;
-	if(mode!=ONLY_CONTROL) ballDetector=new BallDetector(mode,withBot,mode!=ONLY_CONTROL,mode==ONLY_DETECTION,mode==ONLY_DETECTION,mode!=ONLY_CONTROL,mode==ONLY_DETECTION);
-	BotController* botController=new BotController(mode,withBot,mode!=ONLY_DETECTION,mode==ONLY_CONTROL);
+	if(/*mode!=ONLY_CONTROL*/true) ballDetector=new BallDetector(mode,withBot,/*mode!=ONLY_CONTROL*/true,/*mode==ONLY_DETECTION*/true,/*mode==ONLY_DETECTION*/true,/*mode!=ONLY_CONTROL*/true,/*mode==ONLY_DETECTION*/true);
+	BotController* botController=new BotController(mode,withBot,/*mode!=ONLY_DETECTION*/true,/*mode==ONLY_CONTROL*/true);
 
 	while(true) {
 		Position pos;
-		if(mode!=ONLY_CONTROL) if(!ballDetector->loop(pos)) break;
+		if(/*mode!=ONLY_CONTROL*/true) if(!ballDetector->loop(pos)) break;
 		cout << "####POSITION(cam) " << pos.x << " / " << pos.y << " / " << pos.z << endl;
 		double horizAngle=0; //°, angle de la caméra % à l'horizontale, orienté vers le haut     <<<<<<<<<<<< ANGLE HORIZONTALE CAMERA HERE
 		//Horizon rotation :
 		double tmpY=pos.y;
 		horizAngle=-horizAngle*M_PI/180;
-		pos.y=cos(horizAngle)*tmpY+sin(horizAngle)*pos.z;
-		pos.z=-sin(horizAngle)*tmpY+cos(horizAngle)*pos.z;
+		pos.y+=30;
+		pos.x+=20;
+		//pos.y=cos(horizAngle)*tmpY+sin(horizAngle)*pos.z;
+		//pos.z=-sin(horizAngle)*tmpY+cos(horizAngle)*pos.z;
 		cout << "####POSITION(bot) " << pos.x << " / " << pos.y << " / " << pos.z << endl;
 		if(!botController->loop(pos)) break;
 	}
