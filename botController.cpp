@@ -109,12 +109,18 @@ void BotController::drawAxis(Mat& draw1,Mat& draw2) {
 }
 
 void BotController::drawBot(Mat& draw1,Mat& draw2,bool workZoneCheck) {
-	Point p1(_drawOrigin.x+_drawScale*_length1*cos(_alpha1),_drawOrigin.y-_drawScale*_length1*sin(_alpha1));
-	Point p2(p1.x+_drawScale*_length2*cos(_alpha2+_alpha1),p1.y-_drawScale*_length2*sin(_alpha2+_alpha1));
-	Point p3(p2.x+_drawScale*_length3Al*cos(_alpha1+_alpha2+_alpha3),p2.y-_drawScale*_length3Al*sin(_alpha1+_alpha2+_alpha3));
+	double alpha1=conv(1,false,_alpha1);
+	double alpha2=conv(2,false,_alpha2);
+	double alpha3=conv(3,false,_alpha3);
+	double theta0=conv(0,false,_theta0);
+	double theta3=conv(4,false,_theta3);
+
+	Point p1(_drawOrigin.x+_drawScale*_length1*cos(alpha1),_drawOrigin.y-_drawScale*_length1*sin(alpha1));
+	Point p2(p1.x+_drawScale*_length2*cos(alpha2+alpha1),p1.y-_drawScale*_length2*sin(alpha2+alpha1));
+	Point p3(p2.x+_drawScale*_length3Al*cos(alpha1+alpha2+alpha3),p2.y-_drawScale*_length3Al*sin(alpha1+alpha2+alpha3));
 	
-	Point pp1(_drawOrigin.x+_drawScale*_wristX*cos(_theta0),_drawOrigin.y-_drawScale*_wristX*sin(_theta0));
-	Point pp2(pp1.x+_drawScale*_length3Th*cos(_theta0+_theta3),pp1.y-_drawScale*_length3Th*sin(_theta0+_theta3));
+	Point pp1(_drawOrigin.x+_drawScale*_wristX*cos(theta0),_drawOrigin.y-_drawScale*_wristX*sin(theta0));
+	Point pp2(pp1.x+_drawScale*_length3Th*cos(theta0+theta3),pp1.y-_drawScale*_length3Th*sin(theta0+theta3));
 	
 	if(workZoneCheck) {
 		line(draw1,_drawOrigin,p1,Scalar(0,0,255),4);
@@ -156,7 +162,7 @@ void BotController::drawBot(Mat& draw1,Mat& draw2,bool workZoneCheck) {
 bool BotController::initSerial() {
 	if(_withBot) {
 		if((_fd=serialOpen("/dev/ttyUSB0",9600))<0) return false;
-		if(wiringPiSetup()==-1) return false;
+		//if(wiringPiSetup()==-1) return false;
 	}
 	return true;
 }
@@ -179,14 +185,21 @@ void BotController::sendAngle(double angle) {
 void BotController::sendToMotors() {
 	cout << "## SENT " << string(_withBot?"(really)":"(virtually)") << " ";
 
+	/*double alpha1=conv(1,true,_alpha1);
+	double alpha2=conv(2,true,_alpha2);
+	double alpha3=conv(3,true,_alpha3);
+	double theta0=conv(0,true,_theta0);
+	double theta3=conv(4,true,_theta3);*/
+
 	sendInt(250);	
 	double baseAngle=0.78*(180-_theta0*180/M_PI);
+	//baseAngle=0.78*theta0;
 	sendAngle(baseAngle); //Contraintes du a la position du servomoteur+conversion 180degrés vers 140degrés
 
 	double shouAngle=0.78*(_alpha1*180/M_PI);	
 	sendAngle(shouAngle); //avant : 180-le tout
 
-	sendAngle(0.78*(-_alpha2*180/M_PI));
+	sendAngle(0.78*(180-_alpha2*180/M_PI));
 	sendAngle(90+_alpha3*180/M_PI);
 	sendAngle(90+_theta3*180/M_PI);	
 	
@@ -477,4 +490,74 @@ void BotController::receiveVoltage() {
 		if(strlen(ret)>0) _batteryLevel=ret[0];
 	}
 }
+
+double BotController::conv(unsigned int servo,bool purpose/*false:draw,true:bot*/,double input) {
+	double ret;
+	if(!purpose) {
+		ret=input;
+		/*if(servo==0) {
+			//base
+			if(input<-90) return -90;
+			else if(input>90) return 90;
+			else return input;
+		}
+		else if(servo==1) {
+			//épaule
+			if(180-input>140) input=40;
+			return ret;
+		}
+		else if(servo==2) {
+			//coude
+			double t=input+180;
+			if(input>0) return 0;
+			else return input;
+		}
+		else if(servo==3) {
+			//poignet roulis
+			if(input<-90) return -90;
+			else if(input>90) return 90;
+			else return input;
+		}
+		else if(servo==4) {
+			//poignet lacet
+			if(input<-90) return -90;
+			else if(input>90) return 90;
+			else return input;
+		}*/
+		return ret;
+	}
+	else {
+		if(servo==0) {
+			//base
+			if(input<-90) return -90;
+			else if(input>90) return 90;
+			else return input;
+		}
+		else if(servo==1) {
+			//épaule
+			ret=180-input;
+			if(ret>140) ret=140;
+			return ret;
+		}
+		else if(servo==2) {
+			//coude
+			ret=input+180;
+			if(ret>180) ret=180;
+			return ret;
+		}
+		else if(servo==3) {
+			//poignet roulis
+			if(input<-90) return -90;
+			else if(input>90) return 90;
+			else return input;
+		}
+		else if(servo==4) {
+			//poignet lacet
+			if(input<-90) return -90;
+			else if(input>90) return 90;
+			else return input;
+		}
+	}
+}
+
 

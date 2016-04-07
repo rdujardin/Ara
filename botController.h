@@ -95,6 +95,8 @@ class BotController : public Adjustable {
 		unsigned int _batteryLevel;
 
 		Mode _mode;
+
+		double conv(unsigned int servo,bool purpose/*false:draw,true:bot*/,double input);
 };
 
 #endif
