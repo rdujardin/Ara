@@ -51,39 +51,15 @@ BotController::~BotController() {
 
 bool BotController::loop(Position detection) {
 
-	/*if(!_withGui && _adjustable) {
-		cout << "X ? ";
-		cin >> _inputX;
-		if(_inputX==_strCliQuit) return false;
-		cout << "Y ? ";
-		cin >> _inputY;
-		if(_inputY==_strCliQuit) return false;
-		cout << "Z ? ";
-		cin >> _inputZ;
-		if(_inputZ==_strCliQuit) return false;
-		_terminalX=atoi(_inputX.c_str());
-		_terminalY=atoi(_inputY.c_str());
-		_terminalZ=atoi(_inputZ.c_str());
-	}
-	
-	if(!_adjustable) {
-		_terminalX=detection.x;
-		_terminalY=detection.y;
-		_terminalZ=detection.z;
-	}*/
-
 	_terminalX=detection.x;
 	_terminalY=detection.y;
 	_terminalZ=detection.z;
 	
-	cout << "X : " << _terminalX << " / Y : " << _terminalY << " / Z : " << _terminalZ << endl;
-
-	//calcul theta :
+	//Angles computing :
 	_theta0=atan2((_terminalZ-_length3*cos(_terminalAbsAlpha)*cos(_terminalAbsTheta)),(_terminalX+_length3*cos(_terminalAbsAlpha)*sin(_terminalAbsTheta)));
 	_theta3=M_PI/2-_terminalAbsTheta-_theta0;
 	_length3Al=_length3*cos(_theta3);
 	_wristX=(_terminalX+_length3*cos(_terminalAbsAlpha)*sin(_terminalAbsTheta))/cos(_theta0);
-	//wristX=terminalX-length3*cos(terminalAbsAngle);
 	_wristY=_terminalY-_length3*sin(_terminalAbsAlpha);
 	_terminalXTh=_wristX+_length3Al*cos(_terminalAbsAlpha);
 	
@@ -97,29 +73,66 @@ bool BotController::loop(Position detection) {
 	_alpha3=_terminalAbsAlpha-_alpha1-_alpha2;
 
 	//Conversion : computed->real
-	//COMPUTED
-	//	theta0 : 0 à droite, 180 à gauche
-	//	theta3 : 0 dans le prolongement, 90 à gauche (angle droit)
-	//	alpha1 : 0 à l'horizontale devant, 90 en haut
-	//	alpha2 : 0 dans le prolongement, 90 angle droit vers le haut, -90 angle droit vers le bas
-	//	alpha3 : 0 dans le prolongement, 90 angle droit vers le haut, -90 angle droit vers le bas
-	//REAL
-	//	theta0 : 0-140, 0 à droite, 70 en face (à multiplier par 180/140 pour envoyer au servo)
-	//	theta3 : 90 dans le prolongement, (0 ??)
-	//	alpha1 : 0-140, 140 à l'horizontale arrière (à multiplier par 180/140 pour envoyer au servo)
-	//	alpha2 : 0-180, 0 replié par le haut sur la première pièce, 90 dans le prolongement
-	//	alpha3 : 0-180, 90 dans le prolongement, (0 ??)
-
-	_theta0=_theta0*140/180;
-	_theta3=_theta3; //??
-	_alpha1=140-(180-_alpha1)*140/180;
-	_alpha2=_alpha2; //?? pb : on peut pas aller vers le bas !?
-	_alpha3=_alpha3; //??
-
-	//impact sur la zone de travail
+	_theta0=conv(0,true,_theta0);
+	_alpha1=conv(1,true,_alpha1);
+	_alpha2=conv(2,true,_alpha2);
+	_alpha3=conv(3,true,_alpha3);
+	_theta3=conv(4,true,_theta3);
 
 	return loopAngles();
 	
+}
+
+bool BotController::checkWorkingZone() {
+	bool w=true;
+	w=w && _theta0>=0*M_PI/180 && _theta0<=140*M_PI/180;
+	w=w && _alpha1>=0*M_PI/180 && _alpha1<=140*M_PI/180;
+	w=w && _alpha2>=0*M_PI/180 && _alpha2<=180*M_PI/180;
+	w=w && _alpha3>=0*M_PI/180 && _alpha3<=180*M_PI/180;
+	w=w && _theta3>=0*M_PI/180 && _theta3<=180*M_PI/180;
+
+	w=w && _terminalY>0;
+	w=w && _terminalZ>=20;
+
+	return w;
+}
+
+bool BotController::loopAngles() {
+	Mat draw1=Mat::zeros(_drawHeight,_drawWidth,CV_8UC3);
+	Mat draw2=Mat::zeros(_drawHeight,_drawWidth,CV_8UC3);
+
+	//VÉRIFICATION DE LA ZONE DE TRAVAIL
+	bool workZoneCheck=checkWorkingZone();
+
+	if(_withGui) {
+		//Draw axis
+		drawAxis(draw1,draw2);
+		
+		//Draw bot
+		drawBot(draw1,draw2,workZoneCheck);
+		
+		imshow("Bras (vue de cote)",draw1);
+		imshow("Bras (vue de haut)",draw2);
+	}
+	else {
+		cout << "alpha1 = " << _alpha1*180/M_PI << endl;
+		cout << "alpha2 = " << _alpha2*180/M_PI << endl;
+		cout << "alpha3 = " << _alpha3*180/M_PI << endl;
+		cout << "theta0 = " << _theta0*180/M_PI << endl;
+		cout << "theta3 = " << _theta3*180/M_PI << endl;
+		cout << "-------------------------" << endl;
+	}
+
+	//double angle_test(__alpha0);
+	if(workZoneCheck) sendToMotors();
+	
+	if(_adjustable) {
+		if (waitKey(30) >= 0) return false;
+	}
+
+	receiveVoltage();
+	
+	return true;
 }
 
 void BotController::drawAxis(Mat& draw1,Mat& draw2) {
@@ -160,31 +173,33 @@ void BotController::drawBot(Mat& draw1,Mat& draw2,bool workZoneCheck) {
 		line(draw2,pp1,pp2,Scalar(255,0,0),4);
 		circle(draw2,Point(_drawOrigin.x+_drawScale*_terminalX,_drawOrigin.y-_drawScale*_terminalZ),10,Scalar(240,0,0),2);
 		
-		ostringstream ossPos,oss1,oss2,oss3,ossTh0,ossTh3;
-		ossPos << " (" << _terminalX << "," << _terminalY << "," << _terminalZ << ")";
-		putText(draw1,ossPos.str(),Point(_drawOrigin.x+_drawScale*_terminalXTh,_drawOrigin.y-_drawScale*_terminalY),1,1,Scalar(255,0,0),1);
-		oss1 << "Alpha1 = " << _alpha1*180/M_PI;
-		putText(draw1,oss1.str(),Point(_drawWidth-220,20),1,1,Scalar(0,0,255),1);
-		oss2 << "Alpha2 = " << _alpha2*180/M_PI;
-		putText(draw1,oss2.str(),Point(_drawWidth-220,40),1,1,Scalar(0,255,0),1);
-		oss3 << "Alpha3 = " << _alpha3*180/M_PI;
-		putText(draw1,oss3.str(),Point(_drawWidth-220,60),1,1,Scalar(255,0,0),1);
-		ossTh0 << "Theta0 = " << _theta0*180/M_PI;
-		putText(draw2,ossTh0.str(),Point(_drawWidth-220,20),1,1,Scalar(0,255,255),1);
-		ossTh3 << "Theta3 = " << _theta3*180/M_PI;
-		putText(draw2,ossTh3.str(),Point(_drawWidth-220,40),1,1,Scalar(255,0,0),1);
-
-		ostringstream ossInx,ossIny,ossInz;
-		ossInx << "Input X : " << _terminalX;
-		ossIny << "Input Y : " << _terminalY;
-		ossInz << "Input Z : " << _terminalZ;
-		putText(draw1,ossInx.str(),Point(10,10),1,1,Scalar(255,255,255),1);
-		putText(draw1,ossIny.str(),Point(10,30),1,1,Scalar(255,255,255),1);
-		putText(draw1,ossInz.str(),Point(10,50),1,1,Scalar(255,255,255),1);
+		
 	}
 	else {
 		putText(draw1,"! SORTIE DE LA ZONE DE TRAVAIL !",Point(0,50),0,1,Scalar(0,0,255),3,8,false);
 	}
+
+	ostringstream ossPos,oss1,oss2,oss3,ossTh0,ossTh3;
+	ossPos << " (" << _terminalX << "," << _terminalY << "," << _terminalZ << ")";
+	putText(draw1,ossPos.str(),Point(_drawOrigin.x+_drawScale*_terminalXTh,_drawOrigin.y-_drawScale*_terminalY),1,1,Scalar(255,0,0),1);
+	oss1 << "Alpha1 = " << _alpha1*180/M_PI;
+	putText(draw1,oss1.str(),Point(_drawWidth-220,20),1,1,Scalar(0,0,255),1);
+	oss2 << "Alpha2 = " << _alpha2*180/M_PI;
+	putText(draw1,oss2.str(),Point(_drawWidth-220,40),1,1,Scalar(0,255,0),1);
+	oss3 << "Alpha3 = " << _alpha3*180/M_PI;
+	putText(draw1,oss3.str(),Point(_drawWidth-220,60),1,1,Scalar(255,0,0),1);
+	ossTh0 << "Theta0 = " << _theta0*180/M_PI;
+	putText(draw2,ossTh0.str(),Point(_drawWidth-220,20),1,1,Scalar(0,255,255),1);
+	ossTh3 << "Theta3 = " << _theta3*180/M_PI;
+	putText(draw2,ossTh3.str(),Point(_drawWidth-220,40),1,1,Scalar(255,0,0),1);
+
+	ostringstream ossInx,ossIny,ossInz;
+	ossInx << "Input X : " << _terminalX;
+	ossIny << "Input Y : " << _terminalY;
+	ossInz << "Input Z : " << _terminalZ;
+	putText(draw1,ossInx.str(),Point(10,10),1,1,Scalar(255,255,255),1);
+	putText(draw1,ossIny.str(),Point(10,30),1,1,Scalar(255,255,255),1);
+	putText(draw1,ossInz.str(),Point(10,50),1,1,Scalar(255,255,255),1);
 }
 
 bool BotController::initSerial() {
@@ -207,7 +222,8 @@ int BotController::safe(int v) {
 }
 
 void BotController::sendAngle(double angle) {
-	sendInt(safe((int) (angle))); //retrait de safe
+	//sendInt(safe((int) (angle))); //retrait de safe
+	sendInt((int) angle);
 }
 
 void BotController::sendToMotors() {
@@ -220,17 +236,20 @@ void BotController::sendToMotors() {
 	double theta3=conv(4,true,_theta3);*/
 
 	sendInt(250);	
-	double baseAngle=0.78*(180-_theta0*180/M_PI);
+	//double baseAngle=0.78*(180-_theta0*180/M_PI);
 	//baseAngle=0.78*theta0;
-	sendAngle(baseAngle); //Contraintes du a la position du servomoteur+conversion 180degrés vers 140degrés
+	sendAngle(_theta0); //Contraintes du a la position du servomoteur+conversion 180degrés vers 140degrés
 
-	double shouAngle=0.78*(_alpha1*180/M_PI);	
-	sendAngle(shouAngle); //avant : 180-le tout
+	//double shouAngle=0.78*(_alpha1*180/M_PI);	
+	sendAngle(_alpha1); //avant : 180-le tout
 
-	sendAngle(0.78*(180-_alpha2*180/M_PI));
+	/*sendAngle(0.78*(180-_alpha2*180/M_PI));
 	sendAngle(90+_alpha3*180/M_PI);
 	sendAngle(90+_theta3*180/M_PI);	
-	
+	*/
+	sendAngle(_alpha2);
+	sendAngle(_alpha3);
+	sendAngle(_theta3);
 	cout << endl;
 
 
@@ -257,46 +276,6 @@ void BotController::adjusted(std::string name,int val) {
 	_terminalX=(_params["X = "]-70)/2;
 	_terminalY=_params["Y = "];
 	_terminalZ=(_params["Z = "]-40)/2;
-}
-
-bool BotController::loopAngles() {
-	Mat draw1=Mat::zeros(_drawHeight,_drawWidth,CV_8UC3);
-	Mat draw2=Mat::zeros(_drawHeight,_drawWidth,CV_8UC3);
-
-	bool workZoneCheck=sqrt(_terminalXTh*_terminalXTh+_terminalY*_terminalY)<=_length1+_length2+_length3 && sqrt(_terminalX*_terminalX+_terminalZ*_terminalZ)<=_length1+_length2+_length3;
-	workZoneCheck=workZoneCheck && (_theta0<140 && _alpha1<140);
-	workZoneCheck=workZoneCheck && (_terminalZ > 20);
-
-	if(_withGui) {
-		//Draw axis
-		drawAxis(draw1,draw2);
-		
-		//Draw bot
-		drawBot(draw1,draw2,workZoneCheck);
-		
-		imshow("Bras (vue de cote)",draw1);
-		imshow("Bras (vue de haut)",draw2);
-		//if(waitKey(30)>=0) return false;
-	}
-	else {
-		cout << "alpha1 = " << _alpha1*180/M_PI << endl;
-		cout << "alpha2 = " << _alpha2*180/M_PI << endl;
-		cout << "alpha3 = " << _alpha3*180/M_PI << endl;
-		cout << "theta0 = " << _theta0*180/M_PI << endl;
-		cout << "theta3 = " << _theta3*180/M_PI << endl;
-		cout << "-------------------------" << endl;
-	}
-
-	//double angle_test(__alpha0);
-	if(workZoneCheck) sendToMotors();
-	
-	if(_adjustable) {
-		if (waitKey(30) >= 0) return false;
-	}
-
-	receiveVoltage();
-	
-	return true;
 }
 
 void BotController::startUpRoutine() {
@@ -354,11 +333,11 @@ void BotController::startUpRoutine() {
 
 	//Execute
 	for(vector<BotState>::iterator it=trajectory.begin();it!=trajectory.end();++it) {
-		_theta0=(*it)[0]*M_PI/180;
-		_alpha1=(*it)[1]*M_PI/180;
-		_alpha2=(*it)[2]*M_PI/180;
-		_alpha3=(*it)[3]*M_PI/180;
-		_theta3=(*it)[4]*M_PI/180;
+		_theta0=conv(0,true,(*it)[0]*M_PI/180);
+		_alpha1=conv(1,true,(*it)[1]*M_PI/180);
+		_alpha2=conv(2,true,(*it)[2]*M_PI/180);
+		_alpha3=conv(3,true,(*it)[3]*M_PI/180);
+		_theta3=conv(4,true,(*it)[4]*M_PI/180);
 		_length3Al=_length3*cos(_theta3);
 		//_wristX=(-_length3*sin(_theta3)+_length3*cos(_terminalAbsAlpha)*sin(_terminalAbsTheta))/cos(_theta0);
 		loopAngles();
@@ -426,11 +405,11 @@ void BotController::shutDownRoutine() {
 
 	//Execute
 	for(vector<BotState>::iterator it=trajectory.begin();it!=trajectory.end();++it) {
-		_theta0=(*it)[0]*M_PI/180;
-		_alpha1=(*it)[1]*M_PI/180;
-		_alpha2=(*it)[2]*M_PI/180;
-		_alpha3=(*it)[3]*M_PI/180;
-		_theta3=(*it)[4]*M_PI/180;
+		_theta0=conv(0,true,(*it)[0]*M_PI/180);
+		_alpha1=conv(1,true,(*it)[1]*M_PI/180);
+		_alpha2=conv(2,true,(*it)[2]*M_PI/180);
+		_alpha3=conv(3,true,(*it)[3]*M_PI/180);
+		_theta3=conv(4,true,(*it)[4]*M_PI/180);
 		_length3Al=_length3*cos(_theta3);
 		//_wristX=(_terminalX+_length3*cos(_terminalAbsAlpha)*sin(_terminalAbsTheta))/cos(_theta0);
 		loopAngles();
@@ -519,72 +498,36 @@ void BotController::receiveVoltage() {
 	}
 }
 
-double BotController::conv(unsigned int servo,bool purpose/*false:draw,true:bot*/,double input) {
-	double ret;
-	if(!purpose) {
-		ret=input;
-		/*if(servo==0) {
-			//base
-			if(input<-90) return -90;
-			else if(input>90) return 90;
-			else return input;
-		}
-		else if(servo==1) {
-			//épaule
-			if(180-input>140) input=40;
-			return ret;
-		}
-		else if(servo==2) {
-			//coude
-			double t=input+180;
-			if(input>0) return 0;
-			else return input;
-		}
-		else if(servo==3) {
-			//poignet roulis
-			if(input<-90) return -90;
-			else if(input>90) return 90;
-			else return input;
-		}
-		else if(servo==4) {
-			//poignet lacet
-			if(input<-90) return -90;
-			else if(input>90) return 90;
-			else return input;
-		}*/
-		return ret;
+double BotController::conv(unsigned int servo,bool unit,double input) {
+	//servo = 0:_theta0, 1:_alpha1, 2:_alpha2, 3:_alpha3, 4:_theta3
+	//unit : true=computed to real ; false=real to computed
+	
+	//COMPUTED
+	//	theta0 : 0 complètement à droite, 180 à gauche
+	//	theta3 : 0 dans le prolongement, 90 à gauche (angle droit)
+	//	alpha1 : 0 à l'horizontale devant, 90 en haut
+	//	alpha2 : 0 dans le prolongement, 90 angle droit vers le haut, -90 angle droit vers le bas
+	//	alpha3 : 0 dans le prolongement, 90 angle droit vers le haut, -90 angle droit vers le bas
+	//REAL
+	//	theta0 : 0-140, 0 à droite (pas complètement), 70 en face (à multiplier par 180/140 pour envoyer au servo)
+	//	theta3 : 90 dans le prolongement, (0 ??)
+	//	alpha1 : 0-140, 140 à l'horizontale arrière (à multiplier par 180/140 pour envoyer au servo)
+	//	alpha2 : 0-180, 0 replié par le bas sur la première pièce, 180 dans le prolongement
+	//	alpha3 : 0-180, 90 dans le prolongement, (0 ??)
+
+	if(unit) {
+		if(servo==0) return input-20*M_PI/180;
+		else if(servo==4) return input+90*M_PI/180; //+90° si 0 à droite, 90°-_theta3 si 0 à gauche
+		else if(servo==1) return input-40*M_PI/180;
+		else if(servo==2) return input+180*M_PI/180;
+		else return input+90*M_PI/180; //+90° si 0 en bas, 90°-_alpha3 si 0 en haut
 	}
 	else {
-		if(servo==0) {
-			//base
-			if(input<-90) return -90;
-			else if(input>90) return 90;
-			else return input;
-		}
-		else if(servo==1) {
-			//épaule
-			ret=180-input;
-			if(ret>140) ret=140;
-			return ret;
-		}
-		else if(servo==2) {
-			//coude
-			ret=input+180;
-			if(ret>180) ret=180;
-			return ret;
-		}
-		else if(servo==3) {
-			//poignet roulis
-			if(input<-90) return -90;
-			else if(input>90) return 90;
-			else return input;
-		}
-		else if(servo==4) {
-			//poignet lacet
-			if(input<-90) return -90;
-			else if(input>90) return 90;
-			else return input;
-		}
+		if(servo==0) return input+20*M_PI/180;
+		else if(servo==4) return input-90*M_PI/180; //-90° si 0 à droite, 90°-_theta3 si 0 à gauche
+		else if(servo==1) return input+40*M_PI/180;
+		else if(servo==2) return input-180*M_PI/180;
+		else return input-90*M_PI/180; //-90° si 0 en bas, 90°-_alpha3 si 0 en haut
 	}
 }
 

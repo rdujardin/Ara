@@ -37,7 +37,7 @@ class BallDetector {
 
 		bool loop(Position& detection);
 		
-		static constexpr double ballRadius=0.065;
+		static constexpr double ballRadius=0.072; //tennis : 0.065 ; balle verte : 7 cm + 2 mm de scratch
 	private:
 		bool _withGui,_withBenchmarking;
 		State _state;

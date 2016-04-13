@@ -99,7 +99,8 @@ class BotController : public Adjustable {
 
 		Mode _mode;
 
-		double conv(unsigned int servo,bool purpose/*false:draw,true:bot*/,double input);
+		double conv(unsigned int servo,bool unit,double input);
+		bool checkWorkingZone();
 };
 
 #endif

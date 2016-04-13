@@ -32,7 +32,6 @@ int main(int argc,char* argv[]) {
 		double tmpY=pos.y;
 		horizAngle=-horizAngle*M_PI/180;
 		pos.y+=30;
-		pos.x+=20;
 		//pos.y=cos(horizAngle)*tmpY+sin(horizAngle)*pos.z;
 		//pos.z=-sin(horizAngle)*tmpY+cos(horizAngle)*pos.z;
 		cout << "####POSITION(bot) " << pos.x << " / " << pos.y << " / " << pos.z << endl;
