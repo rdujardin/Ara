@@ -45,6 +45,9 @@ struct BotState {
 	double base,shou,elbo,wris,wrisTh;
 };
 */
+
+
+
 typedef std::vector<double> BotState;
 
 class BotController : public Adjustable {

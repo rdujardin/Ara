@@ -3,7 +3,7 @@
 using namespace cv;
 using namespace std;
 
-Camera::Camera(bool adjustable) : VideoCapture(0/*j1*/), Adjustable("Camera Settings") {
+Camera::Camera(bool adjustable) : VideoCapture(1/*j1*/), Adjustable("Camera Settings") {
 	set(CV_CAP_PROP_FRAME_WIDTH, width);
 	set(CV_CAP_PROP_FRAME_HEIGHT, height);
 	set(CV_CAP_PROP_FPS, framerate);

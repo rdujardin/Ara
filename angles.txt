@@ -1,0 +1,23 @@
+BASE (angle réel)				(angle à envoyer)
+	0-140							*180/140
+	70 en face						(90 en face)
+
+EPAULE
+	0-140							*180/140
+	140 horiz derrière
+
+COUDE
+	0-180
+	0 replié sur la 1è pièce
+		(pos initiale)
+
+POIGNET ROULIS
+	0-180
+	90 en face
+
+POIGNET LACET
+	0-180
+	90 en face
+
+PINCE
+	

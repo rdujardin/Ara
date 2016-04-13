@@ -96,6 +96,28 @@ bool BotController::loop(Position detection) {
 	_alpha2=atan2(sinAlpha2,cosAlpha2);
 	_alpha3=_terminalAbsAlpha-_alpha1-_alpha2;
 
+	//Conversion : computed->real
+	//COMPUTED
+	//	theta0 : 0 à droite, 180 à gauche
+	//	theta3 : 0 dans le prolongement, 90 à gauche (angle droit)
+	//	alpha1 : 0 à l'horizontale devant, 90 en haut
+	//	alpha2 : 0 dans le prolongement, 90 angle droit vers le haut, -90 angle droit vers le bas
+	//	alpha3 : 0 dans le prolongement, 90 angle droit vers le haut, -90 angle droit vers le bas
+	//REAL
+	//	theta0 : 0-140, 0 à droite, 70 en face (à multiplier par 180/140 pour envoyer au servo)
+	//	theta3 : 90 dans le prolongement, (0 ??)
+	//	alpha1 : 0-140, 140 à l'horizontale arrière (à multiplier par 180/140 pour envoyer au servo)
+	//	alpha2 : 0-180, 0 replié par le haut sur la première pièce, 90 dans le prolongement
+	//	alpha3 : 0-180, 90 dans le prolongement, (0 ??)
+
+	_theta0=_theta0*140/180;
+	_theta3=_theta3; //??
+	_alpha1=140-(180-_alpha1)*140/180;
+	_alpha2=_alpha2; //?? pb : on peut pas aller vers le bas !?
+	_alpha3=_alpha3; //??
+
+	//impact sur la zone de travail
+
 	return loopAngles();
 	
 }
