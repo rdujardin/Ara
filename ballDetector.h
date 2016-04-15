@@ -26,9 +26,10 @@ enum State {
 };
 
 static cv::Mat _kalman=cv::Mat::zeros(WORK_H,WORK_W,CV_8UC3);
-static cv::KalmanFilter KF(4,2,0);
-static cv::Mat_<float> measurement(2,1);
-static std::vector<cv::Point> positionv, kalmanv;
+static cv::KalmanFilter KF(6,3,0); //KF(nbr of state->(x,y,z,vx,vy,vz),nbr of measured states(x,y,z),number of action control)
+//
+static cv::Mat_<float> measurement(3,1); 
+static std::vector<cv::Point3_<float>> positionv, kalmanv;
 
 class BallDetector {
 	public:
@@ -56,7 +57,7 @@ class BallDetector {
 		
 		std::map<std::string,Timable*> _timables;
 
-		cv::Mat kalmanFilter(double posx,double posy);
+		cv::Mat kalmanFilter(double posx,double posy,double posz);
 
 		Mode _mode;
 		bool _withBot;

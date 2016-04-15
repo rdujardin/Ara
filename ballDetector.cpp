@@ -47,13 +47,33 @@ BallDetector::BallDetector(Mode mode,bool withBot,bool withBallPlacing,bool with
 	pourcent=0;
 	centre=Point(WORK_W/2,WORK_H/2);
 	//Initialisation of the filter
-	KF.transitionMatrix=(Mat_<float>(4,4) << 1,0,1,0, 0,1,0,1, 0,0,0.6,0, 0,0,0,0.6); //Sans * au début de la parenthèse
+
+/*2D*/	//KF.transitionMatrix=(Mat_<float>(4,4) << 1,0,1,0, 0,1,0,1, 0,0,0.6,0, 0,0,0,0.6); //Sans * au début de la parenthèse
+
+/*3D*/	KF.transitionMatrix=(Mat_<float>(6,6) << 1,0,0,1,0,0, 0,1,0,0,1,0, 0,0,1,0,0,1, 0,0,0,0.6,0,0, 0,0,0,0,0.6,0, 0,0,0,0,0,0.6);
+
+/*	 x y dx dy
+	| 1 0 0 0 |
+	| 0 1 0 0 |
+	| 0 0 1 0 |
+	| 0 0 0 1 |
+Cas 3D:
+         x y z dx dy dz
+	| 1 0 0 1 0 0 |
+	| 0 1 0 0 1 0 |
+	| 0 0 1 0 0 1 |	
+	| 0 0 0 1 0 0 |	
+	| 0 0 0 0 1 0 |
+	| 0 0 0 0 0 1 |*/
+
 	measurement.setTo(Scalar(0));
 
-	KF.statePost.at<float>(0)=0;
-	KF.statePost.at<float>(1)=0;
-	KF.statePost.at<float>(2)=0;
-	KF.statePost.at<float>(3)=0;
+	KF.statePost.at<float>(0)=0;//initial x position
+	KF.statePost.at<float>(1)=0;//initial y position
+	KF.statePost.at<float>(2)=0;//initial x speed
+	KF.statePost.at<float>(3)=0;//initial y speed
+	KF.statePost.at<float>(4)=0;
+	KF.statePost.at<float>(5)=0;
 	setIdentity(KF.measurementMatrix);
 	setIdentity(KF.processNoiseCov,Scalar::all(1e-2)); //Rapidité du "rattrapage" de l'estimation
 	setIdentity(KF.measurementNoiseCov,Scalar::all(10));
@@ -212,9 +232,12 @@ bool BallDetector::loop(Position& detection) {
 			detection.z=z*100;
 			cout << "u : " << detections[0].x << " / v : " << detections[0].y << " / r : " << detections[0].radius << " ### ";
 			//detections[0]
-			Mat filtered_position=kalmanFilter(detX,detY); //?
-			detection.x=100*((((double) filtered_position.at<float>(0))*4-640)*_cam->pixelSize*z/_cam->focal); //detX
-			detection.y=100*((480-((double) filtered_position.at<float>(1))*4)*_cam->pixelSize*z/_cam->focal); //detY
+			Mat filtered_position=kalmanFilter(detX,detY,z); //?
+			detection.x=100*((((double) filtered_position.at<float>(0))*2-WORK_W)*_cam->pixelSize*z/_cam->focal); //detX
+			detection.y=100*((WORK_H-((double) filtered_position.at<float>(1))*4)*_cam->pixelSize*z/_cam->focal); //detY
+			
+			//detection.z=100*(double) filtered_position.at<float>(2);			
+
 			if(detection.x<0 || detection.x>WORK_W || detection.y<0 || detection.y>WORK_H) detection.valid=false;
 			else detection.valid=true;
 		}
@@ -241,37 +264,39 @@ bool BallDetector::loop(Position& detection) {
 }
 
 //KALMAN
-cv::Mat BallDetector::kalmanFilter(double posx,double posy) {
-	//mem.copyTo(im);
+cv::Mat BallDetector::kalmanFilter(double posx,double posy, double posz) {
+	
 	//First predict, to update the internal statePre variable
 	Mat prediction=KF.predict();
-	Point predictPt(prediction.at<float>(0),prediction.at<float>(1));
+	Point3_<float> predictPt(prediction.at<float>(0),prediction.at<float>(1),prediction.at<float>(2));
 	//Get ball position
 	measurement(0)=posx;
 	measurement(1)=posy;
+	measurement(2)=posz;
 	//The update phase
 	Mat estimated=KF.correct(measurement);
 
-	Point statePt(estimated.at<float>(0),estimated.at<float>(1));
-	Point measPt(measurement(0),measurement(1));
+	Point3_<float> statePt(estimated.at<float>(0),estimated.at<float>(1),estimated.at<float>(2));
+	Point3_<float> measPt(measurement(0),measurement(1),measurement(2));
+	 
 	//plot points
 	//activer si dessin sur fond noir
 
 	positionv.push_back(measPt);
 	kalmanv.push_back(statePt);
 
-	if(positionv.size()>50) {
+	/*if(positionv.size()>50) {
 		positionv.erase(positionv.begin());
 		kalmanv.erase(kalmanv.begin());
 		_kalman=Scalar::all(0);
-	}
+	}*/
 
 	for(int i=0;i<positionv.size()-1;i++) {
-		line(_kalman,positionv[i],positionv[i+1],Scalar(255,255,0),1);
+		//line(_kalman,Point(positionv[i][1],positionv[i][1]),positionv[i+1][1,2],Scalar(255,255,0),1);
 	}
 
 	for(int i=0;i<kalmanv.size();i++) {
-		if(positionv.size()>=50) line(_kalman,kalmanv[i],kalmanv[i+1],Scalar(0,0,255),1);
+		//if(positionv.size()>=50) line(_kalman,kalmanv[i],kalmanv[i+1],Scalar(0,0,255),1);
 	}
 
 	if(posx>WORK_W/2+40 || posx<WORK_H/2-40) {
@@ -285,7 +310,8 @@ cv::Mat BallDetector::kalmanFilter(double posx,double posy) {
 	cout << " | y brut = " << posy << endl;
 	cout << "x _kalman = " << estimated.at<float>(0);
 	cout << " | y _kalman = " << estimated.at<float>(1) << endl;
-
+	cout << "                               z brut = " << posz;
+	cout << "                               | Kalman z = " << estimated.at<float>(2) << endl;
 	return estimated;
 }
 

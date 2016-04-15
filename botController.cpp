@@ -42,7 +42,7 @@ BotController::BotController(Mode mode,bool withBot,bool withGui,bool adjustable
 	_batteryLevel=50;
 	receiveVoltage();
 
-	if(_mode!=ONLY_DETECTION) startUpRoutine();
+	//if(_mode!=ONLY_DETECTION) startUpRoutine();
 }
 
 BotController::~BotController() {
