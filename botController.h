@@ -95,7 +95,7 @@ class BotController : public Adjustable {
 		void routine(bool startUp);
 
 		void receiveVoltage();
-		unsigned int _batteryLevel;
+		int _batteryLevel;
 
 		Mode _mode;
 
