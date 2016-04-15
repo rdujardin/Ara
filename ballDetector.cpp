@@ -229,14 +229,14 @@ bool BallDetector::loop(Position& detection) {
 
 		if(!detections.empty()) {
 			double z=_cam->focal*ballRadius/(2*((double) detR)*4*_cam->pixelSize);
-			detection.z=z*100;
-			cout << "u : " << detections[0].x << " / v : " << detections[0].y << " / r : " << detections[0].radius << " ### ";
+			//detection.z=z*100;
+			//cout << "u : " << detections[0].x << " / v : " << detections[0].y << " / r : " << detections[0].radius << " ### ";
 			//detections[0]
 			Mat filtered_position=kalmanFilter(detX,detY,z); //?
 			detection.x=100*((((double) filtered_position.at<float>(0))*2-WORK_W)*_cam->pixelSize*z/_cam->focal); //detX
 			detection.y=100*((WORK_H-((double) filtered_position.at<float>(1))*4)*_cam->pixelSize*z/_cam->focal); //detY
 			
-			//detection.z=100*(double) filtered_position.at<float>(2);			
+			detection.z=100*(double) filtered_position.at<float>(2);			
 
 			if(detection.x<0 || detection.x>WORK_W || detection.y<0 || detection.y>WORK_H) detection.valid=false;
 			else detection.valid=true;
@@ -251,11 +251,11 @@ bool BallDetector::loop(Position& detection) {
 		}
 		
 		if(_withBenchmarking) {
-			cout << "BENCHMARK ## " << "Total : " << _timer->total() << " ms | ";
+			/*cout << "BENCHMARK ## " << "Total : " << _timer->total() << " ms | ";
 			for(map<string,Timable*>::const_iterator it=_timables.begin();it!=_timables.end();++it) {
 				cout << it->first << " : " << it->second->time() << " ms , ";
 			}
-			cout << endl;
+			cout << endl;*/
 		}
 
 		if (waitKey(30) >= 0) return false;
@@ -292,26 +292,26 @@ cv::Mat BallDetector::kalmanFilter(double posx,double posy, double posz) {
 	}*/
 
 	for(int i=0;i<positionv.size()-1;i++) {
-		//line(_kalman,Point(positionv[i][1],positionv[i][1]),positionv[i+1][1,2],Scalar(255,255,0),1);
+		line(_kalman,Point(positionv[i].x,positionv[i].y),Point(positionv[i+1].x,positionv[i+1].y),Scalar(255,255,0),1);
 	}
 
-	for(int i=0;i<kalmanv.size();i++) {
-		//if(positionv.size()>=50) line(_kalman,kalmanv[i],kalmanv[i+1],Scalar(0,0,255),1);
+	for(int i=0;i<kalmanv.size()-1;i++) {
+		if(positionv.size()>=50) line(_kalman,Point(kalmanv[i].x,kalmanv[i].y),Point(kalmanv[i+1].x,kalmanv[i+1].y),Scalar(0,0,255),1);
 	}
 
 	if(posx>WORK_W/2+40 || posx<WORK_H/2-40) {
 		//circle(_kalman,centre,2*abs(320-posx),Scalar(0,0,255),1,1,1);
 		pourcent=abs(WORK_W/2-posx)*100/(_kalman.cols); //2*Eloignement / largeur_image %
-		cout << "Puissance moteur = " << pourcent << "%" << endl;
+		//cout << "Puissance moteur = " << pourcent << "%" << endl;
 		//putText(im,"TEST",centre,5,10,0,Scalar(0,0,255));
 	}
 
-	cout << "x brut = " << posx;
+	/*cout << "x brut = " << posx;
 	cout << " | y brut = " << posy << endl;
 	cout << "x _kalman = " << estimated.at<float>(0);
 	cout << " | y _kalman = " << estimated.at<float>(1) << endl;
 	cout << "                               z brut = " << posz;
-	cout << "                               | Kalman z = " << estimated.at<float>(2) << endl;
+	cout << "                               | Kalman z = " << estimated.at<float>(2) << endl;*/
 	return estimated;
 }
 

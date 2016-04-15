@@ -144,7 +144,8 @@ void BotController::drawAxis(Mat& draw1,Mat& draw2) {
 	ostringstream oss;
 	oss << "BATTERY ";
 	if(_batteryLevel>=0) oss << _batteryLevel << "%";
-	else oss << "n.c.";
+	else if(_batteryLevel==-1) oss << "n.c.";
+	else oss << "TOO LOW";
 	putText(draw1,oss.str(),Point(_drawWidth-128,_drawHeight-25),1,1,Scalar(0,255,255),1);
 }
 
@@ -203,7 +204,7 @@ void BotController::drawBot(Mat& draw1,Mat& draw2,bool workZoneCheck) {
 
 bool BotController::initSerial() {
 	if(_withBot) {
-		if((_fd=serialOpen("/dev/ttyUSB0",9600))<0) return false;
+		if((_fd=serialOpen("/dev/ttyUSB0"/*0*/,9600))<0) return false;
 		//if(wiringPiSetup()==-1) return false;
 	}
 	return true;
@@ -237,10 +238,10 @@ void BotController::sendToMotors() {
 	sendInt(250);	
 	//double baseAngle=0.78*(180-_theta0*180/M_PI);
 	//baseAngle=0.78*theta0;
-	sendAngle(_theta0*180/M_PI); //Contraintes du a la position du servomoteur+conversion 180degrés vers 140degrés
+	sendAngle(_theta0*180/M_PI*180/140); //Contraintes du a la position du servomoteur+conversion 180degrés vers 140degrés
 
 	//double shouAngle=0.78*(_alpha1*180/M_PI);	
-	sendAngle(_alpha1*180/M_PI); //avant : 180-le tout
+	sendAngle(_alpha1*180/M_PI*180/140); //avant : 180-le tout
 
 	/*sendAngle(0.78*(180-_alpha2*180/M_PI));
 	sendAngle(90+_alpha3*180/M_PI);
@@ -263,7 +264,7 @@ void BotController::sendToMotors() {
 			i++;
 		}
 		ret[i]=0;
-		if(strlen(ret)>0) cout << "-> Arduino says : " << endl << ret;
+		//if(strlen(ret)>0) cout << "-> Arduino says : " << endl << ret;
 	}
 	
 	cout << endl;
@@ -429,7 +430,10 @@ void BotController::receiveVoltage() {
 			i++;
 		}
 		ret[i]=0;
-		if(strlen(ret)>0) _batteryLevel=ret[0];
+		int val=-1;
+		if(strlen(ret)>0) val=ret[0];
+		if(val<=100) _batteryLevel=val;
+		else _batteryLevel=-2;
 	}
 }
 
