@@ -38,7 +38,7 @@ Cas 3D:
 	KF.statePost.at<float>(4)=0;
 	KF.statePost.at<float>(5)=0;
 	setIdentity(KF.measurementMatrix);
-	setIdentity(KF.processNoiseCov,Scalar::all(1e-2)); //Rapidité du "rattrapage" de l'estimation
+	setIdentity(KF.processNoiseCov,Scalar::all(0.05)); //1e-2 Rapidité du "rattrapage" de l'estimation
 	setIdentity(KF.measurementNoiseCov,Scalar::all(10));
 	setIdentity(KF.errorCovPost,Scalar::all(1));
 	//---	
@@ -70,6 +70,9 @@ Cas 3D:
 	_timables["DilEr"]=_dilateEroder;
 	_timables["Ellipse"]=_ellipseFitter;
 	_timables["Moments"]=_momentsDetector;
+
+	Mat vachier=Mat::zeros(Camera::width,Camera::height,CV_8UC3);
+	_hsvThresholder->autoSet(vachier);
 }
 
 BallDetector::~BallDetector() {
@@ -116,7 +119,8 @@ bool BallDetector::loop(Position& detection) {
 	}
 
 	else {
-
+		Mat out;
+		resized.copyTo(out);
 		_gaussianFilter->apply(resized);
 
 		_hsvThresholder->apply(resized, output);
@@ -127,7 +131,7 @@ bool BallDetector::loop(Position& detection) {
 		_dilateEroder->apply(output);
 	
 		DetectionList detections;
-		_ellipseFitter->apply(output,resized,detections); //switch ellipse/moments : switcher le true/false line 186 (true pour ellipses)
+		_ellipseFitter->apply(output,out,detections); //switch ellipse/moments : switcher le true/false line 186 (true pour ellipses)
 		//_momentsDetector->apply(output,resized,detections);
 		
 		/*double detX=0,detY=0,detR=-1,detValid=false;
@@ -166,7 +170,7 @@ bool BallDetector::loop(Position& detection) {
 		else detection.valid=false;*/
 
 		//OLD ELLIPSES CODE BEGIN
-		drawDetections(resized,detections,true);
+		drawDetections(out,detections,true);
 		double detX=0,detY=0,detR=-1;
 		for(DetectionList::const_iterator it=detections.begin();it!=detections.end();++it) {
 			detX+=it->x;
@@ -193,7 +197,7 @@ bool BallDetector::loop(Position& detection) {
 		else detection.valid=false;
 		//OLD ELLIPSES CODE END
 
-		imshow("Input", resized);
+		imshow("Input", out);
 		imshow("Output", output);
 		imshow("Trajectory",_kalman);
 		
