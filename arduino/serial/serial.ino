@@ -23,6 +23,7 @@ Servo servo[nbrServos];
 
         //VOLTMETRE
 int batteryLevel;
+char batteryLevel_char;
 float voltage;
 int mesure_voltage;
   //R1=97.9 kOhms 
@@ -36,12 +37,12 @@ int pinLED=12;
 void setup() {
   Serial.begin(9600);
   voltmetre();
-  Serial.print("Voltage = ");Serial.print(voltage);Serial.println(" V ");Serial.println();
+  //Serial.print("Voltage = ");Serial.print(mesure_voltage);Serial.println(" V ");Serial.println();
   
   
   if (voltage<6.5) 
   {
-    Serial.println("CRITICAL ERROR : BATTERY TOO LOW !");
+    Serial.print((char)150); //valeur arbitraire
     while(1);
   }
   
@@ -49,8 +50,8 @@ void setup() {
     servo[j].attach(brocheServo[j], 800, 2100);     //Necessité de reduire la largeur de la PWM pour la restreindre (course des premiers servos~140)
   }
   for (int j=2 ; j<nbrServos ; j++){
-    servo[j].attach(brocheServo[j], 550, 2450);  //Pour servo poignet1 : 650,2400?
-    //Par défaut : 500,2500, par sécurité j'enlève 50us pour pas arriver en butée mécanique
+    servo[j].attach(brocheServo[j], 600, 2400);  //Pour servo poignet1 : 650,2400?
+    //Par défaut : 500,2500, par sécurité j'enlève 50us voire 100us pour pas arriver en butée mécanique
   }
 
   for (int k=0; k<nbrServos; k++){
@@ -62,7 +63,7 @@ void setup() {
 }
 
 void loop() {
-  if (periode>16000000){
+  if (periode>1600){
     voltmetre();
     periode=0;
     //Serial.println("loop");
@@ -114,9 +115,11 @@ void voltmetre(){
     voltage = mesure_voltage / (255/5);
     voltage = voltage * 0.50229;
     batteryLevel=(voltage-6.6)*100/2.4;
-    if(batteryLevel > 0) Serial.println(batteryLevel);
+    batteryLevel_char=batteryLevel;
+    if(batteryLevel > 0) Serial.print(batteryLevel_char);
     //Serial.print(voltage);
     //Serial.println(" V ");
+    //Serial.println(batteryLevel);
     //else Serial.println("error");
 }
  
@@ -145,3 +148,25 @@ void flashingLED(int periodeLED){
 void stillLED(){
   analogWrite(pinLED,250);
 }
+
+
+/*************** softPWM  ***************/ 
+void softPWM(int pin, int dutyCycle/* Percentage */) {
+  currentMicros = micros(); //Time elapsed since the start of the start of the programm
+  if (currentMicros - previousMicros <= dutyCycle*period/100) {
+    digitalWrite(pin,HIGH);
+    Serial.println("ON");
+  }
+  else {
+    if ( currentMicros - previousMicros <= period) {
+      digitalWrite(pin, LOW);
+      Serial.println("OFF");    
+    }
+    else {
+      digitalWrite(pin, HIGH);
+      Serial.println("ON");
+      previousMicros = currentMicros;
+    }
+  }  
+}
+
