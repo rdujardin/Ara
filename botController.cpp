@@ -39,10 +39,10 @@ BotController::BotController(Mode mode,bool withBot,bool withGui,bool adjustable
 		}
 	}
 
-	_batteryLevel=50;
+	_batteryLevel=-1;
 	receiveVoltage();
 
-	//if(_mode!=ONLY_DETECTION) startUpRoutine();
+	if(_mode!=ONLY_DETECTION) startUpRoutine();
 }
 
 BotController::~BotController() {
@@ -93,6 +93,7 @@ bool BotController::checkWorkingZone() {
 
 	w=w && _terminalY>0;
 	w=w && _terminalZ>=20;
+	w=w && _terminalZ<45;
 
 	return w;
 }
@@ -113,14 +114,6 @@ bool BotController::loopAngles() {
 		
 		imshow("Bras (vue de cote)",draw1);
 		imshow("Bras (vue de haut)",draw2);
-	}
-	else {
-		cout << "alpha1 = " << _alpha1*180/M_PI << endl;
-		cout << "alpha2 = " << _alpha2*180/M_PI << endl;
-		cout << "alpha3 = " << _alpha3*180/M_PI << endl;
-		cout << "theta0 = " << _theta0*180/M_PI << endl;
-		cout << "theta3 = " << _theta3*180/M_PI << endl;
-		cout << "-------------------------" << endl;
 	}
 
 	//double angle_test(__alpha0);
@@ -147,6 +140,13 @@ void BotController::drawAxis(Mat& draw1,Mat& draw2) {
 	putText(draw2,"z",Point(_drawOrigin.x+10,20),0,1,Scalar(255,255,255),1);
 	putText(draw2,"x",Point(_drawWidth-20,_drawOrigin.y-10),0,1,Scalar(255,255,255),1);
 	putText(draw2,"Vue de dessus",Point(10,_drawHeight-20),2,1,Scalar(0,255,255),2);
+
+	ostringstream oss;
+	oss << "BATTERY ";
+	if(_batteryLevel>=0) oss << _batteryLevel << "%";
+	else if(_batteryLevel==-1) oss << "n.c.";
+	else oss << "TOO LOW";
+	putText(draw1,oss.str(),Point(_drawWidth-128,_drawHeight-25),1,1,Scalar(0,255,255),1);
 }
 
 void BotController::drawBot(Mat& draw1,Mat& draw2,bool workZoneCheck) {
@@ -204,7 +204,7 @@ void BotController::drawBot(Mat& draw1,Mat& draw2,bool workZoneCheck) {
 
 bool BotController::initSerial() {
 	if(_withBot) {
-		if((_fd=serialOpen("/dev/ttyUSB0",9600))<0) return false;
+		if((_fd=serialOpen("/dev/ttyUSB0"/*0*/,9600))<0) return false;
 		//if(wiringPiSetup()==-1) return false;
 	}
 	return true;
@@ -238,18 +238,18 @@ void BotController::sendToMotors() {
 	sendInt(250);	
 	//double baseAngle=0.78*(180-_theta0*180/M_PI);
 	//baseAngle=0.78*theta0;
-	sendAngle(_theta0); //Contraintes du a la position du servomoteur+conversion 180degrés vers 140degrés
+	sendAngle(_theta0*180/M_PI*180/140); //Contraintes du a la position du servomoteur+conversion 180degrés vers 140degrés
 
 	//double shouAngle=0.78*(_alpha1*180/M_PI);	
-	sendAngle(_alpha1); //avant : 180-le tout
+	sendAngle(_alpha1*180/M_PI*180/140); //avant : 180-le tout
 
 	/*sendAngle(0.78*(180-_alpha2*180/M_PI));
 	sendAngle(90+_alpha3*180/M_PI);
 	sendAngle(90+_theta3*180/M_PI);	
 	*/
-	sendAngle(_alpha2);
-	sendAngle(_alpha3);
-	sendAngle(_theta3);
+	sendAngle(_alpha2*180/M_PI);
+	sendAngle(_alpha3*180/M_PI);
+	sendAngle(_theta3*180/M_PI);
 	cout << endl;
 
 
@@ -264,7 +264,7 @@ void BotController::sendToMotors() {
 			i++;
 		}
 		ret[i]=0;
-		if(strlen(ret)>0) cout << "-> Arduino says : " << endl << ret;
+		//if(strlen(ret)>0) cout << "-> Arduino says : " << endl << ret;
 	}
 	
 	cout << endl;
@@ -309,7 +309,6 @@ void BotController::startUpRoutine() {
 		if((current[2]<halfElbo)) {
 			current[2]++;
 			trajectory.push_back(current);
-			cout << current[0] << " / " << current[1] << " / " << current[2] << " / " << current[3] << " / " << current[4] << endl;
 		}
 		else if(current[4]>end[4]) {
 			current[4]-=3;
@@ -320,11 +319,9 @@ void BotController::startUpRoutine() {
 			trajectory.push_back(current);
 		}
 		else {
-			cout << "BIS ";
 			if((current[2]<end[2])) current[2]++;
 			if((current[1]>end[1])) current[1]--;
 			trajectory.push_back(current);
-			cout << current[0] << " / " << current[1] << " / " << current[2] << " / " << current[3] << " / " << current[4] << endl;
 		}
 
 		if(current[0]==end[0] && current[1]==end[1] && current[2]==end[2] && current[4]==end[4]) finished=true;
@@ -338,14 +335,18 @@ void BotController::startUpRoutine() {
 		_alpha2=conv(2,true,(*it)[2]*M_PI/180);
 		_alpha3=conv(3,true,(*it)[3]*M_PI/180);
 		_theta3=conv(4,true,(*it)[4]*M_PI/180);
-		_length3Al=_length3*cos(_theta3);
-		//_wristX=(-_length3*sin(_theta3)+_length3*cos(_terminalAbsAlpha)*sin(_terminalAbsTheta))/cos(_theta0);
+		_length3Al=_length3*cos((*it)[4]*M_PI/180);
+		_wristX=_length1*cos((*it)[1]*M_PI/180)+_length2*cos((*it)[1]*M_PI/180+((*it)[2]*M_PI/180));
 		loopAngles();
 		Timer::wait(20);
 	}
 }
 
 void BotController::shutDownRoutine() {
+	_terminalX=0;
+	_terminalY=35;
+	_terminalZ=22;	
+
 	BotState start;
 	
 
@@ -381,7 +382,6 @@ void BotController::shutDownRoutine() {
 		else if((current[2]>halfElbo)) {
 			current[2]--;
 			trajectory.push_back(current);
-			cout << current[0] << " / " << current[1] << " / " << current[2] << " / " << current[3] << " / " << current[4] << endl;
 		}
 		else if(current[4]<end[4]) {
 			current[4]+=3;
@@ -392,11 +392,9 @@ void BotController::shutDownRoutine() {
 			trajectory.push_back(current);
 		}
 		else {
-			cout << "BIS ";
 			if((current[2]>end[2])) current[2]--;
 			if((current[1]<end[1])) current[1]++;
 			trajectory.push_back(current);
-			cout << current[0] << " / " << current[1] << " / " << current[2] << " / " << current[3] << " / " << current[4] << endl;
 		}
 
 		if(current[0]==end[0] && current[1]==end[1] && current[2]==end[2] && current[4]==end[4]) finished=true;
@@ -410,77 +408,15 @@ void BotController::shutDownRoutine() {
 		_alpha2=conv(2,true,(*it)[2]*M_PI/180);
 		_alpha3=conv(3,true,(*it)[3]*M_PI/180);
 		_theta3=conv(4,true,(*it)[4]*M_PI/180);
-		_length3Al=_length3*cos(_theta3);
-		//_wristX=(_terminalX+_length3*cos(_terminalAbsAlpha)*sin(_terminalAbsTheta))/cos(_theta0);
+		_length3Al=_length3*cos((*it)[4]*M_PI/180);
+		_wristX=_length1*cos((*it)[1]*M_PI/180)+_length2*cos((*it)[1]*M_PI/180+((*it)[2]*M_PI/180));
 		loopAngles();
 		Timer::wait(20);
 	}
 }
 
 void BotController::routine(bool startup) {
-	/*cout << "start!" << endl;
-	BotState begin(0,0,0,0,0);
-	BotState end(0,0,0,0,0);
-
-	BotState idle(90,180,-170,160,90);
-	BotState ready(90,100,-90,160,0);
-	cout << "or here" << endl;
-	ready[3]=_terminalAbsAlpha-ready[1]-ready[2];
-
-	cout << "caca " << endl;
-	if(startup) {
-		begin.copyFrom(idle);
-		cout << "pédééééééééé d'enculé de ta m_ère ! tu veux une bière ! tu veux une bière ??!" << endl;
-		end=ready;
-	}
-	else {
-		begin=ready;
-		end=idle;
-	}
-	cout << "enculééé " << endl;
-	vector<BotState> trajectory;
-	cout << "here ?" << endl;
-	trajectory.push_back(idle);
-
-	//Calculate
-	cout << "calc" << endl;
-	BotState current(begin);
-	bool finished=false;
-	double halfElbo=ready.elbo+((idle.elbo-ready.elbo)/2);
-	while(!finished) {
-		if((startup && current.elbo<halfElbo) || ((!startup) && current.elbo>halfElbo)) {
-			current.elbo+=(startup)?1:-1;
-			trajectory.push_back(current);
-			cout << current[0] << " / " << current[1] << " / " << current[2] << " / " << current[3] << " / " << current[4] << endl;
-		}
-		else {
-			cout << "BIS ";
-			if((startup && current.elbo<end.elbo) || ((!startup) && current.elbo>end.elbo)) current.elbo+=(startup)?1:-1;
-			if((startup && current.shou>end.shou) || ((!startup) && current.shou>end.shou)) current.shou-=(startup)?1:-1;
-			trajectory.push_back(current);
-			cout << current[0] << " / " << current[1] << " / " << current[2] << " / " << current[3] << " / " << current[4] << endl;
-		}
-
-		if(current[0]==end[0] && current[1]==end[1] && current[2]==end[2]) finished=true;
-
-	}
-
-	//Print
-	cout << "££££££££" << endl;
-	for(vector<BotState>::iterator it=trajectory.begin();it!=trajectory.end();++it) {
-		cout << (*it)[0] << " / " << (*it)[1] << " / " << (*it)[2] << " / " << (*it)[3] << " / " << (*it)[4] << endl;
-	}
-
-	//Execute
-	for(vector<BotState>::iterator it=trajectory.begin();it!=trajectory.end();++it) {
-		_theta0=(*it)[0]*M_PI/180;
-		_alpha1=(*it)[1]*M_PI/180;
-		_alpha2=(*it)[2]*M_PI/180;
-		_alpha3=(*it)[3]*M_PI/180;
-		_theta3=(*it)[4]*M_PI/180;
-		loopAngles();
-		Timer::wait(20);
-	}*/
+	//.
 }
 
 void BotController::receiveVoltage() {
@@ -494,7 +430,10 @@ void BotController::receiveVoltage() {
 			i++;
 		}
 		ret[i]=0;
-		if(strlen(ret)>0) _batteryLevel=ret[0];
+		int val=-1;
+		if(strlen(ret)>0) val=ret[0];
+		if(val<=100) _batteryLevel=val;
+		else _batteryLevel=-2;
 	}
 }
 
