@@ -1,18 +1,18 @@
 /****************************************************************
 *                Ecriture série des valeurs servos              *
 ****************************************************************/
-        
-        
-        //SERVO 
+#define MODE_BRAS 0
+#define MODE_TANK 1
+int mode = MODE_BRAS;
+
+        //SERVOS 
 #include <Servo.h>
 int i=-1;
 int y=0;
 const int nbrServos=6;                              //Nombre de servomoteurs
 const int brocheServo[nbrServos]={3,5,6,9,13,11};   //Choix des broches pour les servomoteurs 3 5 6 9 10 11
-//const int brocheServo[nbrServos]={8,9};
 int angle[nbrServos];
-const int angle0[nbrServos]={90,180,0,90,90,100}; //90 0 180 180 90
-//int angle0[nbrServos]={90,90};
+const int angle0[nbrServos]={90,180,0,90,180,90}; //90 0 180 180 90
 Servo servo[nbrServos];
 
 //Servo 2 : angle+ = montée : OK
@@ -30,8 +30,16 @@ int mesure_voltage;
   //R2=98.8 kOhms
 float periode=0; //permet de relentir la cadence d'envoi de la tension
 
-int pinLED=12;
 
+        //softPWM
+unsigned long currentMicros = micros();
+unsigned long previousMicros = 0;
+
+float PWM_frequency = 200;
+unsigned long PWM_period = 1e6 / PWM_frequency; //Period = 1 / F(Hz) *  
+
+int pinRightMotor = 12;
+int pinLeftMotor = 13;
 
 
 void setup() {
@@ -39,11 +47,10 @@ void setup() {
   voltmetre();
   //Serial.print("Voltage = ");Serial.print(mesure_voltage);Serial.println(" V ");Serial.println();
   
-  
-  if (voltage<6.5) 
+  while (voltage<6.5) 
   {
     Serial.print((char)150); //valeur arbitraire
-    while(1);
+    delay(100);
   }
   
   for (int j=0 ; j<2 ; j++){
@@ -60,21 +67,34 @@ void setup() {
   
   y=0;
   i=-1;
+  
+  pinMode(pinLeftMotor,OUTPUT);
+  pinMode(pinRightMotor,OUTPUT);
 }
 
 void loop() {
-  if (periode>1600){
+  if (periode>1600000){
     voltmetre();
     periode=0;
     //Serial.println("loop");
   }
   
+  if (mode == MODE_TANK) {
+    softPWM(pinLeftMotor,puissance[0]);
+    softPWM(pinRightMotor,puissance[1]);
+  } 
   while (Serial.available()){
 
       int c=Serial.read();
       if(c==250) {
          Serial.println(" ");
          i=0; 
+         mode = MODE_BRAS
+      }
+      if(c==254) {
+         Serial.println(" ");
+         i=0; 
+         MODE = MODE_TANK:
       }
       /*if(c==65) { //MODE 1
         glowingLED(30);
@@ -88,7 +108,7 @@ void loop() {
       else {
          //Serial.print(c);
          //Serial.print(" ");
-         if(i>=0 && i<nbrServos && voltage>6.5) {
+         if(mode == MODE_BRAS && i>=0 && i<nbrServos && voltage>6.5) {
             angle[i]=c;
             //Serial.print("Servo numero ");
             Serial.print(i+1);
@@ -97,15 +117,27 @@ void loop() {
             Serial.print(" / ");
             servo[i].write(angle[i]);
             i++;
+            if(i==nbrServos) {
+              y=0;
+              i=-1; 
+            }
          } 
-         if(i==nbrServos) {
-            y=0;
-            i=-1; 
+         if(mode == MODE_TANK && i>=0 && i<2 && voltage>6.5) {
+            puissance[i]=c;
+            //Serial.print("Servo numero ");
+            Serial.print(i+1);
+            Serial.print("=");
+            Serial.print(puissance[i]);
+            Serial.print(" / ");
+            i++;
+            if(i==2) {
+              y=0;
+              i=-1; 
+            }
          }
       }
   
-  }
-  
+  } 
   periode++;
  }
  
@@ -158,7 +190,7 @@ void softPWM(int pin, int dutyCycle/* Percentage */) {
     Serial.println("ON");
   }
   else {
-    if ( currentMicros - previousMicros <= period) {
+    if ( currentMicros - previousMicros <= PWM_period) {
       digitalWrite(pin, LOW);
       Serial.println("OFF");    
     }
