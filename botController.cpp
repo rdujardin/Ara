@@ -4,7 +4,6 @@ using namespace cv;
 using namespace std;
 
 const Point BotController::_drawOrigin=Point(200,425);
-const string BotController::_strCliQuit=string("quit");
 
 BotController::BotController(bool withBot) : Adjustable("Bras (vue de cote)") {
 	_withBot=withBot;

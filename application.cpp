@@ -4,15 +4,15 @@ using namespace std;
 using namespace cv;
 
 Application::Application(int argc,char* argv[]) {
-	bool withBot=(argc>1);
+	readArgs(argc,argv);	
 
-	_cam=new Camera(true,0);
+	_cam=new Camera(true,_optCamId);
 	if (!_cam->isOpened()) throw -1;
 
 	initWindows();
 
 	_ballDetector=new BallDetector(_cam);
-	_botController=new BotController(withBot);
+	_botController=new BotController(_optWithBot);
 
 	while(true) {
 		Position pos;
@@ -55,33 +55,48 @@ void Application::initWindows() {
 	
 	namedWindow("Input", 1);
 	namedWindow("Output", 1);
-	//namedWindow("Hsv", 1);
 	namedWindow("Trajectory",1);
 	moveWindow("Input",0,0);
-	//moveWindow("Hsv",700,0);
 	moveWindow("Output",700,0);
 	moveWindow("Trajectory",1300,0);
 
 	namedWindow("Bras (vue de cote)",1);
 	namedWindow("Bras (vue de haut)",1);
-
-	//moveWindow("Bras (vue de cote)",0,300);
-	//moveWindow("Bras (vue de haut)",640,300);
 	moveWindow("Bras (vue de cote)",0,600);
 	moveWindow("Bras (vue de haut)",740,600);
 
 	moveWindow("Logs",1400,600);
-	/*Mat empty=Mat::zeros(Camera::width,Camera::height,CV_8UC3);
-	imshow("Input",empty);
-	imshow("Output",empty);
-	imshow("Hsv",empty);
-	imshow("Trajectory",empty);
-	imshow("Bras (vue de cote)",empty);
-	imshow("Bras (vue de haut)",empty);*/
 	
 	activatedWindows["Settings"]=true;
 	activatedWindows["Camera Settings"]=false;
 	activatedWindows["Bras (vue de cote)"]=false;
 
+}
+
+void Application::readArgs(int argc,char* argv[]) {
+	//Set default options
+	_optWithBot=false;
+	_optCamId=0;
+
+	//Read arguments
+	vector<string> args;
+	for(unsigned int c=1;c<argc;++c) {
+		args.push_back(string(argv[c]));
+	}
+
+	for(vector<string>::iterator it=args.begin();it!=args.end();++it) {
+		string arg=*it;
+		
+		if(arg=="bot") _optWithBot=true;
+		else {
+			size_t equal=arg.find_first_of("=");
+			if(equal<arg.size()-1) {
+				string option=arg.substr(0,equal);
+				string value=arg.substr(equal+1);
+
+				if(option=="cam") _optCamId=stoi(value);
+			}
+		}
+	}
 }
 

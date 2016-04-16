@@ -19,6 +19,10 @@ class Application {
 		BallDetector* _ballDetector;
 		BotController* _botController;
 
+		bool _optWithBot;
+		unsigned int _optCamId;
+
+		void readArgs(int argc,char* argv[]);
 		void adaptOrientation(Position& pos);
 		void initWindows();
 };
