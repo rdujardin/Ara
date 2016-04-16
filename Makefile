@@ -6,8 +6,11 @@ clean:
 rebuild: clean
 	rm -rf ara
 
-ara: obj/common.o obj/main.o obj/ballDetector.o obj/camera.o obj/timer.o obj/adjustable.o obj/hsv.o obj/filters.o obj/hough.o obj/detectors.o obj/botController.o obj/logWindow.o
-	g++ -o ara obj/common.o obj/main.o obj/ballDetector.o obj/camera.o obj/timer.o obj/adjustable.o obj/hsv.o obj/filters.o obj/hough.o obj/detectors.o obj/botController.o obj/logWindow.o `pkg-config --cflags --libs opencv` -lwiringPi -lpthread -std=c++0x -g -O4
+ara: obj/application.o obj/common.o obj/main.o obj/ballDetector.o obj/camera.o obj/timer.o obj/adjustable.o obj/hsv.o obj/filters.o obj/hough.o obj/detectors.o obj/botController.o obj/logWindow.o
+	g++ -o ara obj/application.o obj/common.o obj/main.o obj/ballDetector.o obj/camera.o obj/timer.o obj/adjustable.o obj/hsv.o obj/filters.o obj/hough.o obj/detectors.o obj/botController.o obj/logWindow.o `pkg-config --cflags --libs opencv` -lwiringPi -lpthread -std=c++0x -g -O4
+
+obj/application.o: application.cpp
+	g++ -o obj/application.o -c application.cpp -std=c++0x -g -O4
 
 obj/common.o: common.cpp
 	g++ -o obj/common.o -c common.cpp -std=c++0x -g -O4
