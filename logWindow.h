@@ -5,16 +5,37 @@
 #include <cmath>
 #include <sstream>
 
-#include "common.h"
 #include "adjustable.h"
 #include "timer.h"
 
-class LogWindow : public std::ostream {
+class Log {
+	public:
+		Log();
+		Log(cv::Scalar _color,int _size);
+
+		Log& operator=(Log const& l);
+		
+		std::ostringstream& write();
+		std::ostringstream& read();
+	
+		cv::Scalar color;
+		int size;
+	private:
+		std::ostringstream _stream;
+};
+
+class LogWindow {
 	public:
 		LogWindow();
+
+		std::map<std::string,Log>& logs();
+		void refresh();
+
+		Log& operator[](std::string id);
 		
 	private:
-		cv::Mat* _logMat;
+		cv::Mat _logMat;
+		std::map<std::string,Log> _logs;
 };
 
 #endif

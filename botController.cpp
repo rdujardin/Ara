@@ -188,7 +188,7 @@ void BotController::drawBot(Mat& draw1,Mat& draw2,bool workZoneCheck) {
 		
 	}
 	else {
-		putText(draw1,"! SORTIE DE LA ZONE DE TRAVAIL !",Point(0,50),0,1,Scalar(0,0,255),3,8,false);
+		putText(draw1,"! SORTIE DE LA ZONE DE TRAVAIL !",Point(0,200),0,1,Scalar(0,0,255),3,8,false);
 	}
 
 	ostringstream ossPos,oss1,oss2,oss3,ossTh0,ossTh3;

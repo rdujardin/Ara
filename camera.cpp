@@ -3,7 +3,9 @@
 using namespace cv;
 using namespace std;
 
-Camera::Camera(bool adjustable) : VideoCapture(1/*j1*/), Adjustable("Camera Settings") {
+Camera::Camera(bool adjustable,unsigned int camId) : VideoCapture(camId), Adjustable("Camera Settings") {
+	_camId=camId;
+
 	set(CV_CAP_PROP_FRAME_WIDTH, width);
 	set(CV_CAP_PROP_FRAME_HEIGHT, height);
 	set(CV_CAP_PROP_FPS, framerate);
@@ -36,8 +38,9 @@ Camera::Camera(bool adjustable) : VideoCapture(1/*j1*/), Adjustable("Camera Sett
 }
 
 int Camera::v4l(string args) {
-	string str="v4l2-ctl -d /dev/video1 "+args;
-	return system(str.c_str());
+	ostringstream oss;
+	oss << "v4l2-ctl -d /dev/video" << _camId << " " << args;
+	return system(oss.str().c_str());
 }
 
 int Camera::updateV4l(string name) {

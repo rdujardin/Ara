@@ -6,6 +6,8 @@ using namespace cv;
 BallDetector::BallDetector(Camera* cam) {
 	_state=BD_RUNNING;
 
+	logs["Benchmark"]=Log();
+
 	//KALMAN
 	pourcent=0;
 	centre=Point(WORK_W/2,WORK_H/2);
@@ -109,7 +111,7 @@ bool BallDetector::loop(Position& detection) {
 		flip(resized,flipped,1);
 	
 		imshow("Input",flipped);
-		imshow("Hsv",flipped);
+		//imshow("Hsv",flipped);
 		imshow("Output",flipped);
 	
 		/*if(waitKey(30)>=0) {
@@ -126,7 +128,7 @@ bool BallDetector::loop(Position& detection) {
 		_hsvThresholder->apply(resized, output);
 		//r=R*255/(R+V+B) ; b=B*255/(R+V+B) ; b>r ? ..
 
-		imshow("Hsv", output);
+		//imshow("Hsv", output);
 
 		_dilateEroder->apply(output);
 	
@@ -201,11 +203,11 @@ bool BallDetector::loop(Position& detection) {
 		imshow("Output", output);
 		imshow("Trajectory",_kalman);
 		
-		/*cout << "BENCHMARK ## " << "Total : " << _timer->total() << " ms | ";
+		logs["Benchmark"].write() << "BENCHMARK ## " << "Total : " << _timer->total() << " ms | ";
 		for(map<string,Timable*>::const_iterator it=_timables.begin();it!=_timables.end();++it) {
-			cout << it->first << " : " << it->second->time() << " ms , ";
+			logs["Benchmark"].read() << it->first << " : " << it->second->time() << " ms , ";
 		}
-		cout << endl;*/
+
 		
 	}
 	return true;
@@ -233,11 +235,11 @@ cv::Mat BallDetector::kalmanFilter(double posx,double posy, double posz) {
 	positionv.push_back(measPt);
 	kalmanv.push_back(statePt);
 
-	/*if(positionv.size()>50) {
+	if(positionv.size()>50) {
 		positionv.erase(positionv.begin());
 		kalmanv.erase(kalmanv.begin());
 		_kalman=Scalar::all(0);
-	}*/
+	}
 
 	for(int i=0;i<positionv.size()-1;i++) {
 		line(_kalman,Point(positionv[i].x,positionv[i].y),Point(positionv[i+1].x,positionv[i+1].y),Scalar(255,255,0),1);

@@ -6,6 +6,7 @@
 #include <iostream>
 #include <queue>
 #include <ctime>
+#include "logWindow.h"
 
 enum Mode {
 	ALL,
@@ -49,6 +50,7 @@ static SyncCout syncCout;
 static char syncEndl='\n';
 
 static std::queue<Position> detection;
+static LogWindow logs;
 
 #define WORK_W 640
 #define WORK_H 480

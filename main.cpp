@@ -4,6 +4,7 @@
 #include "common.h"
 #include "ballDetector.h"
 #include "botController.h"
+#include "logWindow.h"
 
 using namespace std;
 using namespace cv;
@@ -11,7 +12,7 @@ using namespace cv;
 int main(int argc,char* argv[]) {
 	bool withBot=(argc>1);
 
-	Camera* cam=new Camera(true);
+	Camera* cam=new Camera(true,0);
 	if (!cam->isOpened()) throw -1;
 
 	namedWindow("Settings", 3);
@@ -22,11 +23,12 @@ int main(int argc,char* argv[]) {
 	
 	namedWindow("Input", 1);
 	namedWindow("Output", 1);
-	namedWindow("Hsv", 1);
+	//namedWindow("Hsv", 1);
 	namedWindow("Trajectory",1);
 	moveWindow("Input",0,0);
-	moveWindow("Hsv",700,0);
-	moveWindow("Trajectory",1200,0);
+	//moveWindow("Hsv",700,0);
+	moveWindow("Output",700,0);
+	moveWindow("Trajectory",1300,0);
 
 	namedWindow("Bras (vue de cote)",1);
 	namedWindow("Bras (vue de haut)",1);
@@ -36,6 +38,7 @@ int main(int argc,char* argv[]) {
 	moveWindow("Bras (vue de cote)",0,600);
 	moveWindow("Bras (vue de haut)",740,600);
 
+	moveWindow("Logs",1400,600);
 	/*Mat empty=Mat::zeros(Camera::width,Camera::height,CV_8UC3);
 	imshow("Input",empty);
 	imshow("Output",empty);
@@ -46,7 +49,7 @@ int main(int argc,char* argv[]) {
 	
 	activatedWindows["Settings"]=true;
 	activatedWindows["Camera Settings"]=false;
-	activatedWindows["Bras (vue de cote)"]=true;
+	activatedWindows["Bras (vue de cote)"]=false;
 
 	BallDetector* ballDetector=NULL;
 	ballDetector=new BallDetector(cam);
@@ -65,6 +68,8 @@ int main(int argc,char* argv[]) {
 		//pos.z=-sin(horizAngle)*tmpY+cos(horizAngle)*pos.z;
 		//cout << "####POSITION(bot) " << pos.x << " / " << pos.y << " / " << pos.z << endl;
 		if(!botController->loop(pos)) break;
+
+		logs.refresh();
 		
 		char key=waitKey(1);
 		if(key==27) botController->nextState();
