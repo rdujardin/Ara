@@ -3,45 +3,8 @@
 using namespace std;
 using namespace cv;
 
-BallDetector::BallDetector(Mode mode,bool withBot,bool withBallPlacing,bool withGeneralSettings,bool withCamSettings,bool withGui,bool withBenchmarking) {
-	_mode=mode;
-	_withBot=withBot;
-
-	_withGui=withGui;
-	_withBenchmarking=withBenchmarking;
-	_state=(withBallPlacing)?PLACE_BALL:RUNNING;
-
-		if(withGeneralSettings) {
-		cv::namedWindow("Settings", 3);
-		moveWindow("Settings",200,40);
-	}
-	if(withCamSettings) {
-		cv::namedWindow("Camera Settings", 5);
-		moveWindow("Camera Settings",840,40);
-	}
-	
-	if(_withGui) {
-		cv::namedWindow("Input", 1);
-		cv::namedWindow("Output", 1);
-		cv::namedWindow("Hsv", 1);
-		cv::namedWindow("Debug",1);
-		cv::namedWindow("2D Position",1);
-		if(withGeneralSettings) {
-			/*moveWindow("Input",520,40);
-			moveWindow("Hsv",520,308);
-			moveWindow("Output",520,576);*/
-			moveWindow("Input",0,0);
-			moveWindow("Hsv",700,0);
-			moveWindow("2D Position",1200,0);
-		}
-		else {
-			moveWindow("Input",10,10);
-			moveWindow("Hsv",350,10);
-			moveWindow("Output",700,10);
-		}
-	}
-
-
+BallDetector::BallDetector(Camera* cam) {
+	_state=BD_RUNNING;
 
 	//KALMAN
 	pourcent=0;
@@ -91,12 +54,9 @@ Cas 3D:
 	imageSize,CV_16SC2,map1,map2);
 	_map1=map1;
 	_map2=map2;
-	ofstream fichier("test.txt");
-	fichier << _map1;
 	//---
 
-	_cam=new Camera(true);
-	if (!_cam->isOpened()) throw -1;
+	_cam=cam;
 	
 	_timer=new Timer();
 	_hsvThresholder=new HSV_Thresholder(*_timer, true);
@@ -119,7 +79,6 @@ BallDetector::~BallDetector() {
 	delete _gaussianFilter;
 	delete _hsvThresholder;
 	delete _timer;
-	delete _cam;
 }
 
 bool BallDetector::loop(Position& detection) {
@@ -130,10 +89,6 @@ bool BallDetector::loop(Position& detection) {
 	Mat output(Camera::width,Camera::height,CV_8UC3);
 
 	bool newFrame=_cam->read(input);
-	if(_state!=PLACE_BALL && !newFrame) {
-		if(waitKey(30)>=0) return false;
-		else return true;
-	}
 
 	Mat resized(WORK_W,WORK_H,CV_8UC3);
 	//resize(input,resized,Size(320,240));
@@ -145,21 +100,19 @@ bool BallDetector::loop(Position& detection) {
 	vector<Point> poisition_filterless(1); //?
 	vector<Point> position_filtered(1); //?
 
-	if(_state==PLACE_BALL) {
+	if(_state==BD_PLACE_BALL) {
 		circle(resized,Point(WORK_W/2,WORK_H/2),HSV_AUTOSET_RADIUS,Scalar(0,0,255),4);
 		Mat flipped(WORK_W,WORK_H,CV_8UC3);
 		flip(resized,flipped,1);
 	
-		if(_withGui) {
-			imshow("Input",flipped);
-			imshow("Hsv",flipped);
-			imshow("Output",flipped);
-		}
+		imshow("Input",flipped);
+		imshow("Hsv",flipped);
+		imshow("Output",flipped);
 	
-		if(waitKey(30)>=0) {
+		/*if(waitKey(30)>=0) {
 			_hsvThresholder->autoSet(input);
 			_state=RUNNING;
-		}
+		}*/
 	}
 
 	else {
@@ -169,11 +122,7 @@ bool BallDetector::loop(Position& detection) {
 		_hsvThresholder->apply(resized, output);
 		//r=R*255/(R+V+B) ; b=B*255/(R+V+B) ; b>r ? ..
 
-
-
-		//_gaussianFilter->apply(output);
-
-				if(_withGui) imshow("Hsv", output);
+		imshow("Hsv", output);
 
 		_dilateEroder->apply(output);
 	
@@ -244,21 +193,16 @@ bool BallDetector::loop(Position& detection) {
 		else detection.valid=false;
 		//OLD ELLIPSES CODE END
 
-		if(_withGui) {
-			imshow("Input", resized);
-			imshow("Output", output);
-			imshow("2D Position",_kalman); //?
-		}
+		imshow("Input", resized);
+		imshow("Output", output);
+		imshow("Trajectory",_kalman);
 		
-		if(_withBenchmarking) {
-			/*cout << "BENCHMARK ## " << "Total : " << _timer->total() << " ms | ";
-			for(map<string,Timable*>::const_iterator it=_timables.begin();it!=_timables.end();++it) {
-				cout << it->first << " : " << it->second->time() << " ms , ";
-			}
-			cout << endl;*/
+		/*cout << "BENCHMARK ## " << "Total : " << _timer->total() << " ms | ";
+		for(map<string,Timable*>::const_iterator it=_timables.begin();it!=_timables.end();++it) {
+			cout << it->first << " : " << it->second->time() << " ms , ";
 		}
-
-		if (waitKey(30) >= 0) return false;
+		cout << endl;*/
+		
 	}
 	return true;
 }

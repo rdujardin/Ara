@@ -6,12 +6,10 @@ using namespace std;
 const Point BotController::_drawOrigin=Point(200,425);
 const string BotController::_strCliQuit=string("quit");
 
-BotController::BotController(Mode mode,bool withBot,bool withGui,bool adjustable) : Adjustable("Bras (vue de cote)") {
-	_mode=mode;	
+BotController::BotController(bool withBot) : Adjustable("Bras (vue de cote)") {
 	_withBot=withBot;
-	_withGui=withGui;
-	_adjustable=adjustable;
-	
+	_state=BC_START_UP;
+
 	_terminalX=0;
 	_terminalY=35;
 	_terminalZ=22;
@@ -19,68 +17,88 @@ BotController::BotController(Mode mode,bool withBot,bool withGui,bool adjustable
 	if(_withBot)
 		if(!initSerial()) throw -1;
 
-	if(_withGui) {
-		namedWindow("Bras (vue de cote)",1);
-		namedWindow("Bras (vue de haut)",1);
+	_params["X = "]=_terminalX*2+70;
+	_params["Y = "]=_terminalY;
+	_params["Z = "]=_terminalZ*2+40;
 	
-		//moveWindow("Bras (vue de cote)",0,300);
-		//moveWindow("Bras (vue de haut)",640,300);
-		moveWindow("Bras (vue de cote)",0,600);
-		moveWindow("Bras (vue de haut)",740,600);
-		
-		_params["X = "]=_terminalX*2+70;
-		_params["Y = "]=_terminalY;
-		_params["Z = "]=_terminalZ*2+40;
-		
-		if(_adjustable) {
-			makeAdjustable("X = ",140);
-			makeAdjustable("Y = ",70);
-			makeAdjustable("Z = ",140);
-		}
-	}
+	makeAdjustable("X = ",140);
+	makeAdjustable("Y = ",70);
+	makeAdjustable("Z = ",140);
 
 	_batteryLevel=-1;
 	receiveVoltage();
 
-	if(_mode!=ONLY_DETECTION) startUpRoutine();
+	startUpRoutine();
 }
 
 BotController::~BotController() {
-	if(_mode!=ONLY_DETECTION) shutDownRoutine();
+	shutDownRoutine();
 }
 
 bool BotController::loop(Position detection) {
 
-	_terminalX=detection.x;
-	_terminalY=detection.y;
-	_terminalZ=detection.z;
-	
-	//Angles computing :
-	_theta0=atan2((_terminalZ-_length3*cos(_terminalAbsAlpha)*cos(_terminalAbsTheta)),(_terminalX+_length3*cos(_terminalAbsAlpha)*sin(_terminalAbsTheta)));
-	_theta3=M_PI/2-_terminalAbsTheta-_theta0;
-	_length3Al=_length3*cos(_theta3);
-	_wristX=(_terminalX+_length3*cos(_terminalAbsAlpha)*sin(_terminalAbsTheta))/cos(_theta0);
-	_wristY=_terminalY-_length3*sin(_terminalAbsAlpha);
-	_terminalXTh=_wristX+_length3Al*cos(_terminalAbsAlpha);
-	
-	//cf 379.pdf :
-	double cosAlpha2=(_wristX*_wristX+_wristY*_wristY-_length1*_length1-_length2*_length2)/(2*_length1*_length2);
-	double sinAlpha2=-sqrt(1-cosAlpha2*cosAlpha2);
-	double cosAlpha1=(_wristX*(_length1+_length2*cosAlpha2)+_wristY*_length2*sinAlpha2)/(_wristX*_wristX+_wristY*_wristY);
-	double sinAlpha1=sqrt(1-cosAlpha1*cosAlpha1);
-	_alpha1=atan2(sinAlpha1,cosAlpha1);
-	_alpha2=atan2(sinAlpha2,cosAlpha2);
-	_alpha3=_terminalAbsAlpha-_alpha1-_alpha2;
+	if(_state==BC_START_UP) {
+		_theta0=conv(0,true,(*_rtIt)[0]*M_PI/180);
+		_alpha1=conv(1,true,(*_rtIt)[1]*M_PI/180);
+		_alpha2=conv(2,true,(*_rtIt)[2]*M_PI/180);
+		_alpha3=conv(3,true,(*_rtIt)[3]*M_PI/180);
+		_theta3=conv(4,true,(*_rtIt)[4]*M_PI/180);
+		_length3Al=_length3*cos((*_rtIt)[4]*M_PI/180);
+		_wristX=_length1*cos((*_rtIt)[1]*M_PI/180)+_length2*cos((*_rtIt)[1]*M_PI/180+((*_rtIt)[2]*M_PI/180));
+		_rtIt++;
+		if(_rtIt==_routineTrajectory.end()) _state=BC_RUNNING;
+		Timer::wait(20);
+		loopAngles();
+		return true;
+	}
+	else if(_state==BC_RUNNING) {
 
-	//Conversion : computed->real
-	_theta0=conv(0,true,_theta0);
-	_alpha1=conv(1,true,_alpha1);
-	_alpha2=conv(2,true,_alpha2);
-	_alpha3=conv(3,true,_alpha3);
-	_theta3=conv(4,true,_theta3);
-
-	return loopAngles();
+		_terminalX=detection.x;
+		_terminalY=detection.y;
+		_terminalZ=detection.z;
 	
+		//Angles computing :
+		_theta0=atan2((_terminalZ-_length3*cos(_terminalAbsAlpha)*cos(_terminalAbsTheta)),(_terminalX+_length3*cos(_terminalAbsAlpha)*sin(_terminalAbsTheta)));
+		_theta3=M_PI/2-_terminalAbsTheta-_theta0;
+		_length3Al=_length3*cos(_theta3);
+		_wristX=(_terminalX+_length3*cos(_terminalAbsAlpha)*sin(_terminalAbsTheta))/cos(_theta0);
+		_wristY=_terminalY-_length3*sin(_terminalAbsAlpha);
+		_terminalXTh=_wristX+_length3Al*cos(_terminalAbsAlpha);
+	
+		//cf 379.pdf :
+		double cosAlpha2=(_wristX*_wristX+_wristY*_wristY-_length1*_length1-_length2*_length2)/(2*_length1*_length2);
+		double sinAlpha2=-sqrt(1-cosAlpha2*cosAlpha2);
+		double cosAlpha1=(_wristX*(_length1+_length2*cosAlpha2)+_wristY*_length2*sinAlpha2)/(_wristX*_wristX+_wristY*_wristY);
+		double sinAlpha1=sqrt(1-cosAlpha1*cosAlpha1);
+		_alpha1=atan2(sinAlpha1,cosAlpha1);
+		_alpha2=atan2(sinAlpha2,cosAlpha2);
+		_alpha3=_terminalAbsAlpha-_alpha1-_alpha2;
+
+		//Conversion : computed->real
+		_theta0=conv(0,true,_theta0);
+		_alpha1=conv(1,true,_alpha1);
+		_alpha2=conv(2,true,_alpha2);
+		_alpha3=conv(3,true,_alpha3);
+		_theta3=conv(4,true,_theta3);
+
+		loopAngles();
+		return true;
+	}
+	else {
+		_theta0=conv(0,true,(*_rtIt)[0]*M_PI/180);
+		_alpha1=conv(1,true,(*_rtIt)[1]*M_PI/180);
+		_alpha2=conv(2,true,(*_rtIt)[2]*M_PI/180);
+		_alpha3=conv(3,true,(*_rtIt)[3]*M_PI/180);
+		_theta3=conv(4,true,(*_rtIt)[4]*M_PI/180);
+		_length3Al=_length3*cos((*_rtIt)[4]*M_PI/180);
+		_wristX=_length1*cos((*_rtIt)[1]*M_PI/180)+_length2*cos((*_rtIt)[1]*M_PI/180+((*_rtIt)[2]*M_PI/180));
+		Timer::wait(20);
+		_rtIt++;
+		if(_rtIt==_routineTrajectory.end()) return false;
+		loopAngles();
+		return true;
+	}
+
 }
 
 bool BotController::checkWorkingZone() {
@@ -105,24 +123,18 @@ bool BotController::loopAngles() {
 	//VÉRIFICATION DE LA ZONE DE TRAVAIL
 	bool workZoneCheck=checkWorkingZone();
 
-	if(_withGui) {
-		//Draw axis
-		drawAxis(draw1,draw2);
-		
-		//Draw bot
-		drawBot(draw1,draw2,workZoneCheck);
-		
-		imshow("Bras (vue de cote)",draw1);
-		imshow("Bras (vue de haut)",draw2);
-	}
+	//Draw axis
+	drawAxis(draw1,draw2);
+	
+	//Draw bot
+	drawBot(draw1,draw2,workZoneCheck);
+	
+	imshow("Bras (vue de cote)",draw1);
+	imshow("Bras (vue de haut)",draw2);
 
 	//double angle_test(__alpha0);
 	if(workZoneCheck) sendToMotors();
 	
-	if(_adjustable) {
-		if (waitKey(30) >= 0) return false;
-	}
-
 	receiveVoltage();
 	
 	return true;
@@ -202,6 +214,13 @@ void BotController::drawBot(Mat& draw1,Mat& draw2,bool workZoneCheck) {
 	putText(draw1,ossInz.str(),Point(10,50),1,1,Scalar(255,255,255),1);
 }
 
+void BotController::nextState() {
+	if(_state==BC_RUNNING) {
+		shutDownRoutine();
+		_state=BC_SHUT_DOWN;
+	}
+}
+
 bool BotController::initSerial() {
 	if(_withBot) {
 		if((_fd=serialOpen("/dev/ttyUSB0"/*0*/,9600))<0) return false;
@@ -212,63 +231,27 @@ bool BotController::initSerial() {
 
 void BotController::sendInt(int v) {
 	if(_withBot) serialPutchar(_fd,v);
-	cout << v << " , ";
-}
-
-int BotController::safe(int v) {
-	if(v<0) return 0;
-	else if(v>180) return 180;
-	else return v;
 }
 
 void BotController::sendAngle(double angle) {
-	//sendInt(safe((int) (angle))); //retrait de safe
-	sendInt((int) angle);
+	int ang=(int) angle;
+	cout << ang << ", ";
+	sendInt(ang);
 }
 
 void BotController::sendToMotors() {
 	cout << "## SENT " << string(_withBot?"(really)":"(virtually)") << " ";
 
-	/*double alpha1=conv(1,true,_alpha1);
-	double alpha2=conv(2,true,_alpha2);
-	double alpha3=conv(3,true,_alpha3);
-	double theta0=conv(0,true,_theta0);
-	double theta3=conv(4,true,_theta3);*/
-
 	sendInt(250);	
-	//double baseAngle=0.78*(180-_theta0*180/M_PI);
-	//baseAngle=0.78*theta0;
-	sendAngle(_theta0*180/M_PI*180/140); //Contraintes du a la position du servomoteur+conversion 180degrés vers 140degrés
-
-	//double shouAngle=0.78*(_alpha1*180/M_PI);	
-	sendAngle(_alpha1*180/M_PI*180/140); //avant : 180-le tout
-
-	/*sendAngle(0.78*(180-_alpha2*180/M_PI));
-	sendAngle(90+_alpha3*180/M_PI);
-	sendAngle(90+_theta3*180/M_PI);	
-	*/
+	sendAngle(_theta0*180/M_PI*180/140);
+	sendAngle(_alpha1*180/M_PI*180/140);
 	sendAngle(_alpha2*180/M_PI);
 	sendAngle(_alpha3*180/M_PI);
 	sendAngle(_theta3*180/M_PI);
-	cout << endl;
 
+	cout << endl;
 
 	delay(30);
-
-	if(_withBot) {
-		char ret[100];
-		int i=0;
-		while (serialDataAvail (_fd))
-		{
-	  		ret[i]= serialGetchar (_fd) ;
-			i++;
-		}
-		ret[i]=0;
-		//if(strlen(ret)>0) cout << "-> Arduino says : " << endl << ret;
-	}
-	
-	cout << endl;
-	
 }
 
 void BotController::adjusted(std::string name,int val) {
@@ -279,83 +262,70 @@ void BotController::adjusted(std::string name,int val) {
 }
 
 void BotController::startUpRoutine() {
-	//routine(true);
-	//BotState start(90,180,-170,160,90);
 	BotState start;
 	start.push_back(90);
 	start.push_back(180);
 	start.push_back(-170);
-	start.push_back(0); //160
+	start.push_back(0);
 	start.push_back(90);
-	//BotState end(90,100,-90,160,0);
+
 	BotState end;
-	end.push_back(90); //90
-	end.push_back(140); //145
-	end.push_back(-107); //-123
-	end.push_back(0); //-1.7
-	end.push_back(0); //0
+	end.push_back(90);
+	end.push_back(140);
+	end.push_back(-107);
+	end.push_back(0);
+	end.push_back(0);
 	end[3]=_terminalAbsAlpha-end[1]-end[2];
 
 	BotState current=start;
 
-	vector<BotState> trajectory;
-	trajectory.push_back(current);
+	_routineTrajectory.clear();
+	_routineTrajectory.push_back(current);
 
-	//Calculate
+	//Compute
 	bool finished=false;
 	double halfElbo=end[2]+((start[2]-end[2])/2);
 
 	while(!finished) {
 		if((current[2]<halfElbo)) {
 			current[2]++;
-			trajectory.push_back(current);
+			_routineTrajectory.push_back(current);
 		}
 		else if(current[4]>end[4]) {
 			current[4]-=3;
-			trajectory.push_back(current);
+			_routineTrajectory.push_back(current);
 		}
 		else if(current[3]>end[3]) {
 			current[3]-=3;
-			trajectory.push_back(current);
+			_routineTrajectory.push_back(current);
 		}
 		else {
 			if((current[2]<end[2])) current[2]++;
 			if((current[1]>end[1])) current[1]--;
-			trajectory.push_back(current);
+			_routineTrajectory.push_back(current);
 		}
 
 		if(current[0]==end[0] && current[1]==end[1] && current[2]==end[2] && current[4]==end[4]) finished=true;
 
 	}
 
-	//Execute
-	for(vector<BotState>::iterator it=trajectory.begin();it!=trajectory.end();++it) {
-		_theta0=conv(0,true,(*it)[0]*M_PI/180);
-		_alpha1=conv(1,true,(*it)[1]*M_PI/180);
-		_alpha2=conv(2,true,(*it)[2]*M_PI/180);
-		_alpha3=conv(3,true,(*it)[3]*M_PI/180);
-		_theta3=conv(4,true,(*it)[4]*M_PI/180);
-		_length3Al=_length3*cos((*it)[4]*M_PI/180);
-		_wristX=_length1*cos((*it)[1]*M_PI/180)+_length2*cos((*it)[1]*M_PI/180+((*it)[2]*M_PI/180));
-		loopAngles();
-		Timer::wait(20);
-	}
+	_rtIt=_routineTrajectory.begin();
+
 }
 
 void BotController::shutDownRoutine() {
+
 	_terminalX=0;
 	_terminalY=35;
 	_terminalZ=22;	
 
 	BotState start;
-	
-
 	start.push_back(90);
 	start.push_back(140);
 	start.push_back(-107);
 	start.push_back(0);
 	start.push_back(0);
-	//BotState end(90,100,-90,160,0);
+
 	BotState end;
 	end.push_back(90);
 	end.push_back(180);
@@ -367,56 +337,42 @@ void BotController::shutDownRoutine() {
 
 	BotState current=start;
 
-	vector<BotState> trajectory;
-	trajectory.push_back(current);
+	_routineTrajectory.clear();
+	_routineTrajectory.push_back(current);
 
-	//Calculate
+	//Compute
 	bool finished=false;
 	double halfElbo=start[2]+((end[2]-start[2])/2);
 
 	while(!finished) {
 		if(current[1]<end[1]) {
 			current[1]++;
-			trajectory.push_back(current);
+			_routineTrajectory.push_back(current);
 		}
 		else if((current[2]>halfElbo)) {
 			current[2]--;
-			trajectory.push_back(current);
+			_routineTrajectory.push_back(current);
 		}
 		else if(current[4]<end[4]) {
 			current[4]+=3;
-			trajectory.push_back(current);
+			_routineTrajectory.push_back(current);
 		}
 		else if(current[3]<end[3]) {
 			current[3]+=3;
-			trajectory.push_back(current);
+			_routineTrajectory.push_back(current);
 		}
 		else {
 			if((current[2]>end[2])) current[2]--;
 			if((current[1]<end[1])) current[1]++;
-			trajectory.push_back(current);
+			_routineTrajectory.push_back(current);
 		}
 
 		if(current[0]==end[0] && current[1]==end[1] && current[2]==end[2] && current[4]==end[4]) finished=true;
 
 	}
 
-	//Execute
-	for(vector<BotState>::iterator it=trajectory.begin();it!=trajectory.end();++it) {
-		_theta0=conv(0,true,(*it)[0]*M_PI/180);
-		_alpha1=conv(1,true,(*it)[1]*M_PI/180);
-		_alpha2=conv(2,true,(*it)[2]*M_PI/180);
-		_alpha3=conv(3,true,(*it)[3]*M_PI/180);
-		_theta3=conv(4,true,(*it)[4]*M_PI/180);
-		_length3Al=_length3*cos((*it)[4]*M_PI/180);
-		_wristX=_length1*cos((*it)[1]*M_PI/180)+_length2*cos((*it)[1]*M_PI/180+((*it)[2]*M_PI/180));
-		loopAngles();
-		Timer::wait(20);
-	}
-}
+	_rtIt=_routineTrajectory.begin();
 
-void BotController::routine(bool startup) {
-	//.
 }
 
 void BotController::receiveVoltage() {

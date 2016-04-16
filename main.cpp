@@ -6,27 +6,56 @@
 #include "botController.h"
 
 using namespace std;
-
-void readArgs(int argc,char* argv[],Mode& mode,bool& withBot);
+using namespace cv;
 
 int main(int argc,char* argv[]) {
-	Mode mode;
-	bool withBot;
-	readArgs(argc,argv,mode,withBot);
+	bool withBot=(argc>1);
+
+	Camera* cam=new Camera(true);
+	if (!cam->isOpened()) throw -1;
+
+	namedWindow("Settings", 3);
+	moveWindow("Settings",200,40);
+
+	/*cv::namedWindow("Camera Settings", 5);
+	moveWindow("Camera Settings",840,40);*/
 	
-	activatedWindows["Settings"]=true/*(mode==ONLY_DETECTION)*/;
-	activatedWindows["Camera Settings"]=true/*(mode==ONLY_DETECTION)*/;
-	activatedWindows["Bras (vue de cote)"]=true/*(mode!=ONLY_DETECTION)*/;
-	activatedWindows["Bras (vue de haut)"]=true/*(mode!=ONLY_DETECTION)*/;
+	namedWindow("Input", 1);
+	namedWindow("Output", 1);
+	namedWindow("Hsv", 1);
+	namedWindow("Trajectory",1);
+	moveWindow("Input",0,0);
+	moveWindow("Hsv",700,0);
+	moveWindow("Trajectory",1200,0);
+
+	namedWindow("Bras (vue de cote)",1);
+	namedWindow("Bras (vue de haut)",1);
+
+	//moveWindow("Bras (vue de cote)",0,300);
+	//moveWindow("Bras (vue de haut)",640,300);
+	moveWindow("Bras (vue de cote)",0,600);
+	moveWindow("Bras (vue de haut)",740,600);
+
+	/*Mat empty=Mat::zeros(Camera::width,Camera::height,CV_8UC3);
+	imshow("Input",empty);
+	imshow("Output",empty);
+	imshow("Hsv",empty);
+	imshow("Trajectory",empty);
+	imshow("Bras (vue de cote)",empty);
+	imshow("Bras (vue de haut)",empty);*/
+	
+	activatedWindows["Settings"]=true;
+	activatedWindows["Camera Settings"]=false;
+	activatedWindows["Bras (vue de cote)"]=true;
 
 	BallDetector* ballDetector=NULL;
-	if(/*mode!=ONLY_CONTROL*/true) ballDetector=new BallDetector(mode,withBot,/*mode!=ONLY_CONTROL*/true,/*mode==ONLY_DETECTION*/true,/*mode==ONLY_DETECTION*/true,/*mode!=ONLY_CONTROL*/true,/*mode==ONLY_DETECTION*/true);
-	BotController* botController=new BotController(mode,withBot,/*mode!=ONLY_DETECTION*/true,/*mode==ONLY_CONTROL*/true);
+	ballDetector=new BallDetector(cam);
+	BotController* botController=new BotController(withBot);
 
 	while(true) {
 		Position pos;
-		if(/*mode!=ONLY_CONTROL*/true) if(!ballDetector->loop(pos)) break;
-		cout << "####POSITION(cam) " << pos.x << " / " << pos.y << " / " << pos.z << endl;
+		ballDetector->loop(pos);
+		//cout << "####POSITION(cam) " << pos.x << " / " << pos.y << " / " << pos.z << endl;
 		double horizAngle=0; //°, angle de la caméra % à l'horizontale, orienté vers le haut     <<<<<<<<<<<< ANGLE HORIZONTALE CAMERA HERE
 		//Horizon rotation :
 		double tmpY=pos.y;
@@ -34,26 +63,17 @@ int main(int argc,char* argv[]) {
 		pos.y+=30;
 		//pos.y=cos(horizAngle)*tmpY+sin(horizAngle)*pos.z;
 		//pos.z=-sin(horizAngle)*tmpY+cos(horizAngle)*pos.z;
-		cout << "####POSITION(bot) " << pos.x << " / " << pos.y << " / " << pos.z << endl;
+		//cout << "####POSITION(bot) " << pos.x << " / " << pos.y << " / " << pos.z << endl;
 		if(!botController->loop(pos)) break;
+		
+		char key=waitKey(1);
+		if(key==27) botController->nextState();
 	}
 
 	delete botController;
-	if(ballDetector) delete ballDetector;
+	delete ballDetector;
+	delete cam;
 
 	return 0;
-}
-
-void readArgs(int argc,char* argv[],Mode& mode,bool& withBot) {
-	mode=ALL;
-	withBot=false;
-	for(unsigned int i=1;i<argc;i++) {
-		if(strcmp(argv[i],"detection")==0) mode=ONLY_DETECTION;
-		else if(strcmp(argv[i],"control")==0) mode=ONLY_CONTROL;
-		else if(strcmp(argv[i],"bot")==0) withBot=true;
-	}
-	cout << "PROVOS > Hello." << endl;
-	cout << "PROVOS > Mode " << string((mode==ALL)?"detection & control":((mode==ONLY_DETECTION)?"detection only":"control only")) << " , " << string(withBot?"with":"without") << " bot." << endl;
-	cout << "-------------------------------------------------" << endl;
 }
 

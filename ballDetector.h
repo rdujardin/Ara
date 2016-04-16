@@ -18,11 +18,9 @@
 #include "camera.h"
 #include "detectors.h"
 
-#define drawCross(center,color,d)
-
 enum State {
-	PLACE_BALL=0,
-	RUNNING=1
+	BD_PLACE_BALL=1,
+	BD_RUNNING=2
 };
 
 static cv::Mat _kalman=cv::Mat::zeros(WORK_H,WORK_W,CV_8UC3);
@@ -33,14 +31,13 @@ static std::vector<cv::Point3_<float>> positionv, kalmanv;
 
 class BallDetector {
 	public:
-		BallDetector(Mode mode,bool withBot,bool withBallPlacing,bool withGeneralSettings,bool withCamSettings,bool withGui,bool withBenchmarking);
+		BallDetector(Camera* cam);
 		~BallDetector();
 
 		bool loop(Position& detection);
 		
 		static constexpr double ballRadius=0.072; //tennis : 0.065 ; balle verte : 7 cm + 2 mm de scratch
 	private:
-		bool _withGui,_withBenchmarking;
 		State _state;
 		Camera* _cam;
 		Timer* _timer;
@@ -58,9 +55,6 @@ class BallDetector {
 		std::map<std::string,Timable*> _timables;
 
 		cv::Mat kalmanFilter(double posx,double posy,double posz);
-
-		Mode _mode;
-		bool _withBot;
 };
 
 #endif
