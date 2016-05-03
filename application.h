@@ -20,6 +20,7 @@ class Application {
 		BotController* _botController;
 
 		bool _optWithBot;
+		bool _optForceWithRoutines;
 		unsigned int _optCamId;
 
 		void readArgs(int argc,char* argv[]);

@@ -5,9 +5,10 @@ using namespace std;
 
 const Point BotController::_drawOrigin=Point(200,425);
 
-BotController::BotController(bool withBot) : Adjustable("Bras (vue de cote)") {
+BotController::BotController(bool withBot,bool forceWithRoutines) : Adjustable("Bras (vue de cote)") {
 
 	_withBot=withBot;
+	_withRoutines=withBot || ((!withBot) && forceWithRoutines);
 	_state=BC_START_UP;
 
 	_terminalX=0;
@@ -38,6 +39,7 @@ BotController::~BotController() {
 bool BotController::loop(Position detection) {
 
 	if(_state==BC_START_UP) {
+		if(!_withRoutines) _state=BC_RUNNING;
 		_theta0=conv(0,true,(*_rtIt)[0]*M_PI/180);
 		_alpha1=conv(1,true,(*_rtIt)[1]*M_PI/180);
 		_alpha2=conv(2,true,(*_rtIt)[2]*M_PI/180);
@@ -85,6 +87,7 @@ bool BotController::loop(Position detection) {
 		return true;
 	}
 	else {
+		if(!_withRoutines) return false;
 		_theta0=conv(0,true,(*_rtIt)[0]*M_PI/180);
 		_alpha1=conv(1,true,(*_rtIt)[1]*M_PI/180);
 		_alpha2=conv(2,true,(*_rtIt)[2]*M_PI/180);

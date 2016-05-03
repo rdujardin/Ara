@@ -51,11 +51,11 @@ Log& LogWindow::operator[](const char* id) {
 
 void LogWindow::refresh() {
 	_logMat=Mat::zeros(360,360,CV_8UC3);
-	unsigned int h=10;
+	/*unsigned int h=10;
 	for(map<string,Log>::iterator it=_logs.begin();it!=_logs.end();++it) {
 		putText(_logMat,it->second.read(),Point(10,h),FONT_HERSHEY_COMPLEX_SMALL,it->second.size,it->second.color,1);
 		h+=20*it->second.size;
-	}
+	}*/
 	imshow("Logs",_logMat);
 }
 

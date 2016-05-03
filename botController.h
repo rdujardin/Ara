@@ -23,7 +23,7 @@ typedef std::vector<double> BotState;
 
 class BotController : public Adjustable {
 	public:
-		BotController(bool withBot);
+		BotController(bool withBot,bool forceWithRoutines);
 		~BotController();
 
 		bool loop(Position detection);
@@ -35,6 +35,7 @@ class BotController : public Adjustable {
 		virtual void adjusted(std::string name,int val);
 	private:
 		bool _withBot;
+		bool _withRoutines;
 		BotControllerState _state;
 
 		std::vector<BotState> _routineTrajectory;

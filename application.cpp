@@ -12,7 +12,7 @@ Application::Application(int argc,char* argv[]) {
 	initWindows();
 
 	_ballDetector=new BallDetector(_cam);
-	_botController=new BotController(_optWithBot);
+	_botController=new BotController(_optWithBot,_optForceWithRoutines);
 
 	while(true) {
 		Position pos;
@@ -72,6 +72,7 @@ void Application::initWindows() {
 void Application::readArgs(int argc,char* argv[]) {
 	//Set default options
 	_optWithBot=false;
+	_optForceWithRoutines=false;
 	_optCamId=0;
 
 	//Read arguments
@@ -84,6 +85,7 @@ void Application::readArgs(int argc,char* argv[]) {
 		string arg=*it;
 		
 		if(arg=="bot") _optWithBot=true;
+		else if(arg=="routines") _optForceWithRoutines=true;
 		else {
 			size_t equal=arg.find_first_of("=");
 			if(equal<arg.size()-1) {
