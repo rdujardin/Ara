@@ -4,15 +4,17 @@ using namespace std;
 using namespace cv;
 
 Application::Application(int argc,char* argv[]) {
-	readArgs(argc,argv);	
+	readArgs(argc,argv);
 
 	_cam=new Camera(true,_optCamId);
 	if (!_cam->isOpened()) throw -1;
 
 	initWindows();
 
-	_ballDetector=new BallDetector(_cam);
-	_botController=new BotController(_optWithBot);
+	_logs=new LogWindow();
+
+	_ballDetector=new BallDetector(_logs,_cam);
+	_botController=new BotController(_logs,_optWithBot);
 
 	while(true) {
 		Position pos;
@@ -20,8 +22,6 @@ Application::Application(int argc,char* argv[]) {
 		adaptOrientation(pos);
 		if(!_botController->loop(pos)) break;
 
-		logs.refresh();
-		
 		char key=waitKey(1);
 		if(key==27) _botController->nextState();
 	}
@@ -31,6 +31,7 @@ Application::Application(int argc,char* argv[]) {
 Application::~Application() {
 	delete _botController;
 	delete _ballDetector;
+	delete _logs;
 	delete _cam;
 }
 
@@ -65,11 +66,12 @@ void Application::initWindows() {
 	moveWindow("Bras (vue de cote)",0,600);
 	moveWindow("Bras (vue de haut)",740,600);
 
+	namedWindow("Logs",1);
 	moveWindow("Logs",1400,600);
 	
-	activatedWindows["Settings"]=true;
-	activatedWindows["Camera Settings"]=false;
-	activatedWindows["Bras (vue de cote)"]=false;
+	adjustableWindows["Settings"]=true;
+	adjustableWindows["Camera Settings"]=false;
+	adjustableWindows["Bras (vue de cote)"]=false;
 
 }
 

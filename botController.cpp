@@ -5,7 +5,9 @@ using namespace std;
 
 const Point BotController::_drawOrigin=Point(200,425);
 
-BotController::BotController(bool withBot) : Adjustable("Bras (vue de cote)") {
+BotController::BotController(LogWindow* logs,bool withBot) : Adjustable("Bras (vue de cote)") {
+
+	_logs=logs;
 	_withBot=withBot;
 	_state=BC_START_UP;
 

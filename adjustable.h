@@ -5,9 +5,9 @@
 #include <string>
 
 #ifdef ADJUSTABLE_C
-std::map<std::string,bool> activatedWindows;
+std::map<std::string,bool> adjustableWindows;
 #else
-extern std::map<std::string,bool> activatedWindows;
+extern std::map<std::string,bool> adjustableWindows;
 #endif
 
 class Adjustable;

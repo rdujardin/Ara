@@ -16,7 +16,7 @@ Adjustable::~Adjustable() {
 
 void Adjustable::makeAdjustable(string name,int count) {
 	_callbackParams[name]=new CallbackParam(name,this);
-	if(activatedWindows[_window]) createTrackbar(name,_window,&(_params[name]),count,&Adjustable::callback,_callbackParams[name]);
+	if(adjustableWindows[_window]) createTrackbar(name,_window,&(_params[name]),count,&Adjustable::callback,_callbackParams[name]);
 }
 
 void Adjustable::callback(int val,void *data) {

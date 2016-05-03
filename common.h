@@ -20,7 +20,6 @@ struct Position {
 };
 
 static std::queue<Position> detection;
-static LogWindow logs;
 
 #define WORK_W 640
 #define WORK_H 480

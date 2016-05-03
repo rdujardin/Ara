@@ -31,7 +31,7 @@ static std::vector<cv::Point3_<float>> positionv, kalmanv;
 
 class BallDetector {
 	public:
-		BallDetector(Camera* cam);
+		BallDetector(LogWindow* logs,Camera* cam);
 		~BallDetector();
 
 		bool loop(Position& detection);
@@ -47,6 +47,8 @@ class BallDetector {
 		Hough* _hough;
 		EllipseFitter* _ellipseFitter;
 		MomentsCalculator* _momentsDetector;
+
+		LogWindow* _logs;
 
 		cv::Mat _map1, _map2;
 		int pourcent;

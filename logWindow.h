@@ -15,8 +15,9 @@ class Log {
 
 		Log& operator=(Log const& l);
 		
-		std::ostringstream& write();
-		std::ostringstream& read();
+		std::ostringstream& reset();
+		std::ostringstream& append();
+		std::string read();
 	
 		cv::Scalar color;
 		int size;
@@ -32,6 +33,7 @@ class LogWindow {
 		void refresh();
 
 		Log& operator[](std::string id);
+		Log& operator[](const char *id);
 		
 	private:
 		cv::Mat _logMat;

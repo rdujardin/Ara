@@ -3,10 +3,11 @@
 using namespace std;
 using namespace cv;
 
-BallDetector::BallDetector(Camera* cam) {
+BallDetector::BallDetector(LogWindow* logs,Camera* cam) {
+	_logs=logs;
 	_state=BD_RUNNING;
 
-	logs["Benchmark"]=Log();
+	(*_logs)["Benchmark"]=Log();
 
 	//KALMAN
 	pourcent=0;
@@ -203,10 +204,11 @@ bool BallDetector::loop(Position& detection) {
 		imshow("Output", output);
 		imshow("Trajectory",_kalman);
 		
-		logs["Benchmark"].write() << "BENCHMARK ## " << "Total : " << _timer->total() << " ms | ";
+		(*_logs)["Benchmark"].reset() << "BENCHMARK ## " << "Total : " << _timer->total() << " ms | ";
 		for(map<string,Timable*>::const_iterator it=_timables.begin();it!=_timables.end();++it) {
-			logs["Benchmark"].read() << it->first << " : " << it->second->time() << " ms , ";
+			(*_logs)["Benchmark"].append() << it->first << " : " << it->second->time() << " ms , ";
 		}
+		_logs->refresh();
 
 		
 	}
