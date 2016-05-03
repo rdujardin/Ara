@@ -17,6 +17,7 @@
 #include "hough.h"
 #include "camera.h"
 #include "detectors.h"
+#include "logWindow.h"
 
 enum State {
 	BD_PLACE_BALL=1,
@@ -31,7 +32,7 @@ static std::vector<cv::Point3_<float>> positionv, kalmanv;
 
 class BallDetector {
 	public:
-		BallDetector(LogWindow* logs,Camera* cam);
+		BallDetector(Camera* cam);
 		~BallDetector();
 
 		bool loop(Position& detection);
@@ -48,14 +49,13 @@ class BallDetector {
 		EllipseFitter* _ellipseFitter;
 		MomentsCalculator* _momentsDetector;
 
-		LogWindow* _logs;
-
-		cv::Mat _map1, _map2;
+		cv::Mat _calibMap1, _calibMap2;
 		int pourcent;
 		cv::Point centre;
 		
 		std::map<std::string,Timable*> _timables;
 
+		void initKalmanFilter();
 		cv::Mat kalmanFilter(double posx,double posy,double posz);
 };
 

@@ -3,60 +3,18 @@
 using namespace std;
 using namespace cv;
 
-BallDetector::BallDetector(LogWindow* logs,Camera* cam) {
-	_logs=logs;
+BallDetector::BallDetector(Camera* cam) {
 	_state=BD_RUNNING;
 
-	(*_logs)["Benchmark"]=Log();
+	logs["Benchmark"]=Log();
 
-	//KALMAN
-	pourcent=0;
-	centre=Point(WORK_W/2,WORK_H/2);
-	//Initialisation of the filter
+	initKalmanFilter();
 
-/*2D*/	//KF.transitionMatrix=(Mat_<float>(4,4) << 1,0,1,0, 0,1,0,1, 0,0,0.6,0, 0,0,0,0.6); //Sans * au début de la parenthèse
-
-/*3D*/	KF.transitionMatrix=(Mat_<float>(6,6) << 1,0,0,1,0,0, 0,1,0,0,1,0, 0,0,1,0,0,1, 0,0,0,0.6,0,0, 0,0,0,0,0.6,0, 0,0,0,0,0,0.6);
-
-/*	 x y dx dy
-	| 1 0 0 0 |
-	| 0 1 0 0 |
-	| 0 0 1 0 |
-	| 0 0 0 1 |
-Cas 3D:
-         x y z dx dy dz
-	| 1 0 0 1 0 0 |
-	| 0 1 0 0 1 0 |
-	| 0 0 1 0 0 1 |	
-	| 0 0 0 1 0 0 |	
-	| 0 0 0 0 1 0 |
-	| 0 0 0 0 0 1 |*/
-
-	measurement.setTo(Scalar(0));
-
-	KF.statePost.at<float>(0)=0;//initial x position
-	KF.statePost.at<float>(1)=0;//initial y position
-	KF.statePost.at<float>(2)=0;//initial x speed
-	KF.statePost.at<float>(3)=0;//initial y speed
-	KF.statePost.at<float>(4)=0;
-	KF.statePost.at<float>(5)=0;
-	setIdentity(KF.measurementMatrix);
-	setIdentity(KF.processNoiseCov,Scalar::all(0.05)); //1e-2 Rapidité du "rattrapage" de l'estimation
-	setIdentity(KF.measurementNoiseCov,Scalar::all(10));
-	setIdentity(KF.errorCovPost,Scalar::all(1));
-	//---	
-
-	//CALIBRAGE
+	//Calibrage caméra
 	Mat distCoeffs=(Mat_<double>(5,1) << -4.4806416419013684e-01,4.1928815312056306e-01,0,0,-4.8777148182526148e-01);
 	Mat cameraMatrix=(Mat_<double>(3,3) << 6.4106316770762089e+02,0,3.195e+02,0,6.4106316770762089e+02,2.395e+02,0,0,1);
-	Mat map1,map2;
-
 	Size imageSize=Size(640,480);
-	initUndistortRectifyMap(cameraMatrix,distCoeffs,Mat(),
-	getOptimalNewCameraMatrix(cameraMatrix,distCoeffs,imageSize,1,imageSize,0),
-	imageSize,CV_16SC2,map1,map2);
-	_map1=map1;
-	_map2=map2;
+	initUndistortRectifyMap(cameraMatrix,distCoeffs,Mat(),getOptimalNewCameraMatrix(cameraMatrix,distCoeffs,imageSize,1,imageSize,0),imageSize,CV_16SC2,_calibMap1,_calibMap2);
 	//---
 
 	_cam=cam;
@@ -97,14 +55,9 @@ bool BallDetector::loop(Position& detection) {
 	bool newFrame=_cam->read(input);
 
 	Mat resized(WORK_W,WORK_H,CV_8UC3);
-	//resize(input,resized,Size(320,240));
-	//resized=input;
-	//input.copyTo(resized);
 	resize(input,resized,Size(WORK_W,WORK_H));
 
-	remap(resized,resized,_map1,_map2,INTER_LINEAR); //?                 //  <<<<<<<<  REMAP HERE <<<<<<< 
-	vector<Point> poisition_filterless(1); //?
-	vector<Point> position_filtered(1); //?
+	remap(resized,resized,_calibMap1,_calibMap2,INTER_LINEAR);
 
 	if(_state==BD_PLACE_BALL) {
 		circle(resized,Point(WORK_W/2,WORK_H/2),HSV_AUTOSET_RADIUS,Scalar(0,0,255),4);
@@ -112,13 +65,7 @@ bool BallDetector::loop(Position& detection) {
 		flip(resized,flipped,1);
 	
 		imshow("Input",flipped);
-		//imshow("Hsv",flipped);
 		imshow("Output",flipped);
-	
-		/*if(waitKey(30)>=0) {
-			_hsvThresholder->autoSet(input);
-			_state=RUNNING;
-		}*/
 	}
 
 	else {
@@ -127,9 +74,6 @@ bool BallDetector::loop(Position& detection) {
 		_gaussianFilter->apply(resized);
 
 		_hsvThresholder->apply(resized, output);
-		//r=R*255/(R+V+B) ; b=B*255/(R+V+B) ; b>r ? ..
-
-		//imshow("Hsv", output);
 
 		_dilateEroder->apply(output);
 	
@@ -204,18 +148,53 @@ bool BallDetector::loop(Position& detection) {
 		imshow("Output", output);
 		imshow("Trajectory",_kalman);
 		
-		(*_logs)["Benchmark"].reset() << "BENCHMARK ## " << "Total : " << _timer->total() << " ms | ";
+		logs["Benchmark"].reset() << "BENCHMARK ## " << "Total : " << _timer->total() << " ms | ";
 		for(map<string,Timable*>::const_iterator it=_timables.begin();it!=_timables.end();++it) {
-			(*_logs)["Benchmark"].append() << it->first << " : " << it->second->time() << " ms , ";
+			logs["Benchmark"].append() << it->first << " : " << it->second->time() << " ms , ";
 		}
-		_logs->refresh();
+		logs.refresh();
 
 		
 	}
 	return true;
 }
 
-//KALMAN
+void BallDetector::initKalmanFilter() {
+	pourcent=0;
+	centre=Point(WORK_W/2,WORK_H/2);
+
+/*2D*/	//KF.transitionMatrix=(Mat_<float>(4,4) << 1,0,1,0, 0,1,0,1, 0,0,0.6,0, 0,0,0,0.6); //Sans * au début de la parenthèse
+
+/*3D*/	KF.transitionMatrix=(Mat_<float>(6,6) << 1,0,0,1,0,0, 0,1,0,0,1,0, 0,0,1,0,0,1, 0,0,0,0.6,0,0, 0,0,0,0,0.6,0, 0,0,0,0,0,0.6);
+
+/*	 x y dx dy
+	| 1 0 0 0 |
+	| 0 1 0 0 |
+	| 0 0 1 0 |
+	| 0 0 0 1 |
+Cas 3D:
+         x y z dx dy dz
+	| 1 0 0 1 0 0 |
+	| 0 1 0 0 1 0 |
+	| 0 0 1 0 0 1 |	
+	| 0 0 0 1 0 0 |	
+	| 0 0 0 0 1 0 |
+	| 0 0 0 0 0 1 |*/
+
+	measurement.setTo(Scalar(0));
+
+	KF.statePost.at<float>(0)=0;//initial x position
+	KF.statePost.at<float>(1)=0;//initial y position
+	KF.statePost.at<float>(2)=0;//initial x speed
+	KF.statePost.at<float>(3)=0;//initial y speed
+	KF.statePost.at<float>(4)=0;
+	KF.statePost.at<float>(5)=0;
+	setIdentity(KF.measurementMatrix);
+	setIdentity(KF.processNoiseCov,Scalar::all(0.05)); //1e-2 Rapidité du "rattrapage" de l'estimation
+	setIdentity(KF.measurementNoiseCov,Scalar::all(10));
+	setIdentity(KF.errorCovPost,Scalar::all(1));
+}
+
 cv::Mat BallDetector::kalmanFilter(double posx,double posy, double posz) {
 	
 	//First predict, to update the internal statePre variable

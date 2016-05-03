@@ -40,5 +40,7 @@ class LogWindow {
 		std::map<std::string,Log> _logs;
 };
 
+static LogWindow logs;
+
 #endif
 

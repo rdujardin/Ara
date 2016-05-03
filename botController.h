@@ -23,7 +23,7 @@ typedef std::vector<double> BotState;
 
 class BotController : public Adjustable {
 	public:
-		BotController(LogWindow* logs,bool withBot);
+		BotController(bool withBot);
 		~BotController();
 
 		bool loop(Position detection);
@@ -58,8 +58,6 @@ class BotController : public Adjustable {
 		double _terminalX,_terminalY,_terminalZ;
 		double _wristX,_wristY,_terminalXTh,_length3Al;
 		static constexpr double _length3Th=_length3*cos(_terminalAbsAlpha);
-
-		LogWindow *_logs;
 		
 		void drawAxis(cv::Mat& draw1,cv::Mat& draw2);
 		void drawBot(cv::Mat& draw1,cv::Mat& draw2,bool workZoneCheck);

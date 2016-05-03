@@ -18,7 +18,6 @@ class Application {
 		Camera* _cam;
 		BallDetector* _ballDetector;
 		BotController* _botController;
-		LogWindow* _logs;
 
 		bool _optWithBot;
 		unsigned int _optCamId;

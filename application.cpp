@@ -11,15 +11,14 @@ Application::Application(int argc,char* argv[]) {
 
 	initWindows();
 
-	_logs=new LogWindow();
-
-	_ballDetector=new BallDetector(_logs,_cam);
-	_botController=new BotController(_logs,_optWithBot);
+	_ballDetector=new BallDetector(_cam);
+	_botController=new BotController(_optWithBot);
 
 	while(true) {
 		Position pos;
 		_ballDetector->loop(pos);
-		adaptOrientation(pos);
+		pos.y+=30;
+		//adaptOrientation(pos);
 		if(!_botController->loop(pos)) break;
 
 		char key=waitKey(1);
@@ -31,20 +30,15 @@ Application::Application(int argc,char* argv[]) {
 Application::~Application() {
 	delete _botController;
 	delete _ballDetector;
-	delete _logs;
 	delete _cam;
 }
 
 void Application::adaptOrientation(Position& pos) {
-	//cout << "####POSITION(cam) " << pos.x << " / " << pos.y << " / " << pos.z << endl;
 	double horizAngle=0; //°, angle de la caméra % à l'horizontale, orienté vers le haut     <<<<<<<<<<<< ANGLE HORIZONTALE CAMERA HERE
-	//Horizon rotation :
 	double tmpY=pos.y;
 	horizAngle=-horizAngle*M_PI/180;
-	pos.y+=30;
-	//pos.y=cos(horizAngle)*tmpY+sin(horizAngle)*pos.z;
-	//pos.z=-sin(horizAngle)*tmpY+cos(horizAngle)*pos.z;
-	//cout << "####POSITION(bot) " << pos.x << " / " << pos.y << " / " << pos.z << endl;
+	pos.y=cos(horizAngle)*tmpY+sin(horizAngle)*pos.z;
+	pos.z=-sin(horizAngle)*tmpY+cos(horizAngle)*pos.z;
 }
 
 void Application::initWindows() {
