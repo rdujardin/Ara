@@ -61,3 +61,12 @@ void Timer::wait(unsigned int ms) {
 	while(Timer::toMilliseconds(clock())-t<ms);
 }
 
+bool Timer::periodically(unsigned int ms,double& time) {
+	double now=Timer::toMilliseconds(clock());
+	if(now-time>=ms) {
+		time=now;
+		return true;
+	}
+	else return false;
+}
+

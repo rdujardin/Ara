@@ -61,7 +61,7 @@ void Application::initWindows() {
 	moveWindow("Bras (vue de haut)",740,600);
 
 	namedWindow("Logs",1);
-	moveWindow("Logs",1400,600);
+	moveWindow("Logs",1400,580);
 	
 	adjustableWindows["Settings"]=true;
 	adjustableWindows["Camera Settings"]=false;

@@ -6,8 +6,6 @@ using namespace cv;
 BallDetector::BallDetector(Camera* cam) {
 	_state=BD_RUNNING;
 
-	logs["Benchmark"]=Log();
-
 	initKalmanFilter();
 
 	//Calibrage caméra
@@ -149,9 +147,9 @@ bool BallDetector::loop(Position& detection) {
 		imshow("Trajectory",_kalman);
 		
 		logs["Benchmark"].reset() << "BENCHMARK ## " << "Total : " << _timer->total() << " ms | ";
-		for(map<string,Timable*>::const_iterator it=_timables.begin();it!=_timables.end();++it) {
+		/*for(map<string,Timable*>::const_iterator it=_timables.begin();it!=_timables.end();++it) {
 			logs["Benchmark"].append() << it->first << " : " << it->second->time() << " ms , ";
-		}
+		}*/
 		logs.refresh();
 
 		

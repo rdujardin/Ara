@@ -36,8 +36,8 @@ class LogWindow {
 		Log& operator[](const char *id);
 		
 	private:
-		cv::Mat _logMat;
 		std::map<std::string,Log> _logs;
+		double _period;
 };
 
 static LogWindow logs;

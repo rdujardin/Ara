@@ -20,6 +20,7 @@ Log& Log::operator=(Log const& l) {
 }
 
 ostringstream& Log::reset() {
+	_stream.str(string());
 	_stream.clear();
 	return _stream;
 }
@@ -33,8 +34,7 @@ string Log::read() {
 }
 
 LogWindow::LogWindow() {
-	_logMat=Mat::zeros(360,360,CV_8UC3);
-	imshow("Logs",_logMat);
+	_period=0;
 }
 
 map<string,Log>& LogWindow::logs() {
@@ -42,20 +42,27 @@ map<string,Log>& LogWindow::logs() {
 }
 
 Log& LogWindow::operator[](std::string id) {
-	return _logs[id];
+	map<string,Log>::iterator res=_logs.find(id);
+	if(res!=_logs.end()) return res->second;
+	else {
+		_logs[id]=Log();
+		return _logs[id];
+	}
 }
 
 Log& LogWindow::operator[](const char* id) {
-	return _logs[string(id)];
+	return operator[](string(id));
 }
 
 void LogWindow::refresh() {
-	_logMat=Mat::zeros(360,360,CV_8UC3);
-	/*unsigned int h=10;
-	for(map<string,Log>::iterator it=_logs.begin();it!=_logs.end();++it) {
-		putText(_logMat,it->second.read(),Point(10,h),FONT_HERSHEY_COMPLEX_SMALL,it->second.size,it->second.color,1);
-		h+=20*it->second.size;
-	}*/
-	imshow("Logs",_logMat);
+	if(Timer::periodically(50,_period)) {
+		Mat logMat=imread("logbg.png");
+		unsigned int h=20;
+		for(map<string,Log>::iterator it=_logs.begin();it!=_logs.end();++it) {
+			putText(logMat,it->second.read(),Point(5,h),1,it->second.size,it->second.color,1);
+			h+=20*it->second.size;
+		}
+		imshow("Logs",logMat);
+	}
 }
 

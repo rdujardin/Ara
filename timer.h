@@ -31,6 +31,7 @@ public:
 	double total();
 
 	static void wait(unsigned int ms);
+	static bool periodically(unsigned int ms,double& time);
 private:
 	std::map<Timable*, clock_t> _timers;
 	clock_t _total;
