@@ -28,19 +28,22 @@ float voltage;
 int mesure_voltage;
   //R1=97.9 kOhms 
   //R2=98.8 kOhms
-float periode=0; //permet de relentir la cadence d'envoi de la tension
+float period=0; //permet de relentir la cadence d'envoi de la tension
 
 
         //softPWM
 unsigned long currentMicros = micros();
 unsigned long previousMicros = 0;
 
+int puissance[2]={0,0};
+
 float PWM_frequency = 200;
 unsigned long PWM_period = 1e6 / PWM_frequency; //Period = 1 / F(Hz) *  
 
 int pinRightMotor = 12;
 int pinLeftMotor = 13;
-
+int pinRightDirection = 14;
+int pinLeftDirection = 15;
 
 void setup() {
   Serial.begin(9600);
@@ -70,12 +73,14 @@ void setup() {
   
   pinMode(pinLeftMotor,OUTPUT);
   pinMode(pinRightMotor,OUTPUT);
+  pinMode(pinLeftDirection,OUTPUT);
+  pinMode(pinRightDirection,OUTPUT);
 }
 
 void loop() {
-  if (periode>1600000){
+  if (period>1600000){
     voltmetre();
-    periode=0;
+    period=0;
     //Serial.println("loop");
   }
   
@@ -89,12 +94,12 @@ void loop() {
       if(c==250) {
          Serial.println(" ");
          i=0; 
-         mode = MODE_BRAS
+         mode = MODE_BRAS;
       }
       if(c==254) {
          Serial.println(" ");
          i=0; 
-         MODE = MODE_TANK:
+         mode = MODE_TANK;
       }
       /*if(c==65) { //MODE 1
         glowingLED(30);
@@ -138,7 +143,7 @@ void loop() {
       }
   
   } 
-  periode++;
+  period++;
  }
  
  
@@ -155,7 +160,7 @@ void voltmetre(){
     //else Serial.println("error");
 }
  
- 
+/* 
 void glowingLED(int periodeLED){
  for(int fadeValue = 0 ; fadeValue <= 255; fadeValue +=5) { 
     analogWrite(pinLED, fadeValue);         
@@ -180,12 +185,12 @@ void flashingLED(int periodeLED){
 void stillLED(){
   analogWrite(pinLED,250);
 }
-
+*/
 
 /*************** softPWM  ***************/ 
 void softPWM(int pin, int dutyCycle/* Percentage */) {
   currentMicros = micros(); //Time elapsed since the start of the start of the programm
-  if (currentMicros - previousMicros <= dutyCycle*period/100) {
+  if (currentMicros - previousMicros <= dutyCycle*PWM_period/100) {
     digitalWrite(pin,HIGH);
     Serial.println("ON");
   }
@@ -202,3 +207,7 @@ void softPWM(int pin, int dutyCycle/* Percentage */) {
   }  
 }
 
+void changeDirection(char Direction,bool level) {
+  if (Direction == 'left') digitalWrite(pinRightDirection, level);
+  else digitalWrite(pinLeftDirection, level);
+ } //A utiliser comme suit : changeDirection('left',HIGH);
