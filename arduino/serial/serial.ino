@@ -48,13 +48,13 @@ int pinLeftDirection = 15;
 void setup() {
   Serial.begin(9600);
   voltmetre();
-  //Serial.print("Voltage = ");Serial.print(mesure_voltage);Serial.println(" V ");Serial.println();
+  Serial.print("Voltage = ");Serial.print(mesure_voltage);Serial.println(" V ");Serial.println();
   
-  while (voltage<6.5) 
+  /*while (voltage<6.5) 
   {
     Serial.print((char)150); //valeur arbitraire
     delay(100);
-  }
+  }*/
   
   for (int j=0 ; j<2 ; j++){
     servo[j].attach(brocheServo[j], 800, 2100);     //Necessité de reduire la largeur de la PWM pour la restreindre (course des premiers servos~140)
@@ -96,7 +96,7 @@ void loop() {
          i=0; 
          mode = MODE_BRAS;
       }
-      if(c==254) {
+      else if(c==254) {
          Serial.println(" ");
          i=0; 
          mode = MODE_TANK;
@@ -110,10 +110,11 @@ void loop() {
       if(c==203) { //MODE 3
         glowingLED(30);
       }*/
-      else {
+      
+      else{
          //Serial.print(c);
          //Serial.print(" ");
-         if(mode == MODE_BRAS && i>=0 && i<nbrServos && voltage>6.5) {
+         if(mode == MODE_BRAS && i>=0 && i<nbrServos /*&& voltage>6.5*/) {
             angle[i]=c;
             //Serial.print("Servo numero ");
             Serial.print(i+1);
@@ -127,7 +128,7 @@ void loop() {
               i=-1; 
             }
          } 
-         if(mode == MODE_TANK && i>=0 && i<2 && voltage>6.5) {
+         if(mode == MODE_TANK && i>=0 && i<2 /*&& voltage>6.5*/) {
             puissance[i]=c;
             //Serial.print("Servo numero ");
             Serial.print(i+1);
