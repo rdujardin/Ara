@@ -41,7 +41,12 @@ void HSV_Thresholder::createUi() {
 	makeAdjustable("V max",255);
 }
 
-void HSV_Thresholder::autoSet(Mat& img) {
+void HSV_Thresholder::autoSet(Mat& img,string ball) {
+
+	map<string,unsigned int[6]> hsvBases;
+	#define hsvBase(name,a,b,c,d,e,f) hsvBases[name][0]=a; hsvBases[name][1]=b; hsvBases[name][2]=c; hsvBases[name][3]=d; hsvBases[name][4]=e; hsvBases[name][5]=f;
+	hsvBase("green",43,78,147,255,39,255);
+	hsvBase("tennis",22,70,94,217,66,255);
 	
 	Mat hsv(img,Rect(Camera::width/2-HSV_AUTOSET_RADIUS/sqrt(2),Camera::height/2-HSV_AUTOSET_RADIUS/sqrt(2),2*HSV_AUTOSET_RADIUS/sqrt(2),2*HSV_AUTOSET_RADIUS/sqrt(2)));
 	cvtColor(hsv,hsv,CV_BGR2HSV);
@@ -56,8 +61,8 @@ void HSV_Thresholder::autoSet(Mat& img) {
 	if(min<0) min=0;
 	max+=HSV_RANGE_EXTEND;
 	if(max>255) max=255;
-	_params["H min"]=43; //37 min
-	_params["H max"]=78; //84 max
+	_params["H min"]=hsvBases[ball][0]; //37 min
+	_params["H max"]=hsvBases[ball][1]; //84 max
 
 	minMaxIdx(channels[1],&min,&max);
 	min-=HSV_RANGE_EXTEND/**10*/;
@@ -65,16 +70,16 @@ void HSV_Thresholder::autoSet(Mat& img) {
 	max+=HSV_RANGE_EXTEND/**10*/;
 	if(max>255) max=255;
 	max=255;
-	_params["S min"]=147; //52min
-	_params["S max"]=255; //max
+	_params["S min"]=hsvBases[ball][2]; //52min
+	_params["S max"]=hsvBases[ball][3]; //max
 	
 	minMaxIdx(channels[2],&min,&max);
 	min-=HSV_RANGE_EXTEND/**7*/;
 	if(min<0) min=0;
 	max+=HSV_RANGE_EXTEND/**7*/;
 	if(max>255) max=255;
-	_params["V min"]=39; //96min
-	_params["V max"]=255; //max
+	_params["V min"]=hsvBases[ball][4]; //96min
+	_params["V max"]=hsvBases[ball][5]; //max
 	
 	createUi();
 	

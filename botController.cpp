@@ -81,7 +81,15 @@ BotState BotController::computeAngles(BotState state) {
 	double sinAlpha1=sqrt(1-cosAlpha1*cosAlpha1);
 	state.alpha1=atan2(sinAlpha1,cosAlpha1);
 	state.alpha2=atan2(sinAlpha2,cosAlpha2);
-	state.alpha3=_terminalAbsAlpha-_state.alpha1-_state.alpha2;
+	state.alpha3=_terminalAbsAlpha-state.alpha1-state.alpha2;
+
+	logs["Computed1"].reset() << "Computed angles ## ";
+	logs["Computed2"].reset() << "Theta 0 : " << state.theta0*180/M_PI;
+	logs["Computed3"].reset() << "Alpha 1 : " << state.alpha1*180/M_PI;
+	logs["Computed4"].reset() << "Alpha 2 : " << state.alpha2*180/M_PI;
+	logs["Computed5"].reset() << "Alpha 3 : " << state.alpha3*180/M_PI;
+	logs["Computed6"].reset() << "Theta 3 : " << state.theta3*180/M_PI;
+	logs.refresh();
 
 	//Conversion : computed->real
 	state.theta0=conv(0,true,state.theta0);

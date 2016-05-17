@@ -16,7 +16,7 @@ public:
 	void apply(cv::Mat& src, cv::Mat& dst);
 	void operator()(cv::Mat& src, cv::Mat& dst);
 	
-	void autoSet(cv::Mat& img);
+	void autoSet(cv::Mat& img,std::string ball);
 	
 	//static const unsigned int autoSetRadius=100; // si changé, changer ballDetector.cpp:118 et hsv.cpp:49
 	

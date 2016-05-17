@@ -54,7 +54,7 @@ class BotController : public Adjustable {
 		std::vector<BotState> _trajectory;
 		std::vector<BotState>::iterator _trajIt;
 
-		static constexpr double _terminalAbsAlpha=-1*M_PI/180;
+		static constexpr double _terminalAbsAlpha=1*M_PI/180;
 		static constexpr double _terminalAbsTheta=0.01*M_PI/180;
 		static constexpr double _length1=30;
 		static constexpr double _length2=30;

@@ -28,6 +28,7 @@ class Application {
 		bool _optWithBot;
 		bool _optForceWithRoutines;
 		unsigned int _optCamId;
+		std::string _optBall;
 
 		void readArgs(int argc,char* argv[]);
 		void adaptPosition(Position& pos);

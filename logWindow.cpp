@@ -35,6 +35,7 @@ string Log::read() {
 
 LogWindow::LogWindow() {
 	_period=0;
+	_toRepaint=false;
 }
 
 map<string,Log>& LogWindow::logs() {
@@ -55,7 +56,11 @@ Log& LogWindow::operator[](const char* id) {
 }
 
 void LogWindow::refresh() {
-	if(Timer::periodically(50,_period)) {
+	_toRepaint=true;
+}
+
+void LogWindow::processRepainting() {
+	if(_toRepaint && Timer::periodically(50,_period)) {
 		Mat logMat=imread("logbg.png");
 		unsigned int h=20;
 		for(map<string,Log>::iterator it=_logs.begin();it!=_logs.end();++it) {
@@ -63,6 +68,7 @@ void LogWindow::refresh() {
 			h+=20*it->second.size;
 		}
 		imshow("Logs",logMat);
+		_toRepaint=false;
 	}
 }
 

@@ -13,7 +13,7 @@ Application::Application(int argc,char* argv[]) {
 
 	initWindows();
 
-	_ballDetector=new BallDetector(_cam);
+	_ballDetector=new BallDetector(_cam,_optBall);
 	_botController=new BotController(_optWithBot);
 
 	_botController->setMode(_mode);
@@ -54,6 +54,7 @@ Application::Application(int argc,char* argv[]) {
 			if(!_botController->loopShutDownRoutine()) break;
 			waitKey(1);
 		}
+		logs.processRepainting();
 	}
 
 }
@@ -130,6 +131,7 @@ void Application::readArgs(int argc,char* argv[]) {
 	_optForceWithRoutines=false;
 	_optCamId=1;
 	_optMode=FOLLOW;
+	_optBall="green";
 
 	//Read arguments
 	vector<string> args;
@@ -154,6 +156,7 @@ void Application::readArgs(int argc,char* argv[]) {
 					else if(value=="follow") _optMode=FOLLOW;
 					else _optMode=MANUAL;
 				}
+				else if(option=="ball") _optBall=value;
 			}
 		}
 	}

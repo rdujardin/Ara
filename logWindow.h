@@ -31,6 +31,7 @@ class LogWindow {
 
 		std::map<std::string,Log>& logs();
 		void refresh();
+		void processRepainting();
 
 		Log& operator[](std::string id);
 		Log& operator[](const char *id);
@@ -38,6 +39,7 @@ class LogWindow {
 	private:
 		std::map<std::string,Log> _logs;
 		double _period;
+		bool _toRepaint;
 };
 
 static LogWindow logs;

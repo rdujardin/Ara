@@ -32,7 +32,7 @@ static std::vector<cv::Point3_<float>> positionv, kalmanv;
 
 class BallDetector {
 	public:
-		BallDetector(Camera* cam);
+		BallDetector(Camera* cam,std::string ball);
 		~BallDetector();
 
 		bool loop(Position& detection);

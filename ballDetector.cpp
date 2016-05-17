@@ -3,7 +3,7 @@
 using namespace std;
 using namespace cv;
 
-BallDetector::BallDetector(Camera* cam) {
+BallDetector::BallDetector(Camera* cam,string ball) {
 	_state=BD_RUNNING;
 
 	initKalmanFilter();
@@ -31,7 +31,7 @@ BallDetector::BallDetector(Camera* cam) {
 	_timables["Moments"]=_momentsDetector;
 
 	Mat vachier=Mat::zeros(Camera::width,Camera::height,CV_8UC3);
-	_hsvThresholder->autoSet(vachier);
+	_hsvThresholder->autoSet(vachier,ball);
 }
 
 BallDetector::~BallDetector() {
