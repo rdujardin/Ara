@@ -28,6 +28,7 @@ class Application {
 		bool _optWithBot;
 		bool _optForceWithRoutines;
 		unsigned int _optCamId;
+		bool _optWithPosSliders;
 
 		void readArgs(int argc,char* argv[]);
 		void adaptPosition(Position& pos);
