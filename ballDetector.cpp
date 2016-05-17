@@ -117,13 +117,24 @@ bool BallDetector::loop(Position& detection) {
 		//OLD ELLIPSES CODE BEGIN
 		drawDetections(out,detections,true);
 		double detX=0,detY=0,detR=-1;
-		for(DetectionList::const_iterator it=detections.begin();it!=detections.end();++it) {
+		/*for(DetectionList::const_iterator it=detections.begin();it!=detections.end();++it) {
 			detX+=it->x;
 			detY+=it->y;
 			if(it->radius>detR) detR=it->radius;
 		}
 		detX/=detections.size();
-		detY/=detections.size();
+		detY/=detections.size();*/
+		double maxR=0;
+		DetectionList::const_iterator maxRIt=detections.begin();
+		for(DetectionList::const_iterator it=detections.begin();it!=detections.end();++it) {
+			if(it->radius>maxR) {
+				maxR=it->radius;
+				maxRIt=it;
+			}
+		}
+		detX=maxRIt->x;
+		detY=maxRIt->y;
+		detR=maxR;
 
 		if(!detections.empty()) {
 			double z=_cam->focal*ballRadius/(2*((double) detR)*4*_cam->pixelSize);

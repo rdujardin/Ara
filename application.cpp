@@ -142,7 +142,6 @@ void Application::readArgs(int argc,char* argv[]) {
 		
 		if(arg=="bot") _optWithBot=true;
 		else if(arg=="routines") _optForceWithRoutines=true;
-		else if(arg=="nopos") _optWithPosSliders=false;
 		else {
 			size_t equal=arg.find_first_of("=");
 			if(equal<arg.size()-1) {
