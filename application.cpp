@@ -9,20 +9,51 @@ Application::Application(int argc,char* argv[]) {
 	_cam=new Camera(true,_optCamId);
 	if (!_cam->isOpened()) throw -1;
 
+	_mode=(_optWithBot || _optForceWithRoutines)?STARTUP:_optMode;
+
 	initWindows();
 
 	_ballDetector=new BallDetector(_cam);
-	_botController=new BotController(_optWithBot,_optForceWithRoutines);
+	_botController=new BotController(_optWithBot);
+
+	_botController->setMode(_mode);
 
 	while(true) {
-		Position pos;
-		_ballDetector->loop(pos);
-		pos.y+=30;
-		//adaptOrientation(pos);
-		if(!_botController->loop(pos)) break;
+		if(_mode==STARTUP) {
+			if(!_botController->loopStartUpRoutine()) setMode(_optMode);
+			waitKey(1);
+		}
+		else if(_mode==FOLLOW) {
+			Position pos;
+			_ballDetector->loop(pos);
+			adaptPosition(pos);
+			if(!_botController->follow(pos)) {
+				if(!nextMode()) break;
+			}
 
-		char key=waitKey(1);
-		if(key==27) _botController->nextState();
+			if(!testNextMode()) break;
+		}
+		else if(_mode==GATHER) {
+			Position pos;
+			_ballDetector->loop(pos);
+			adaptPosition(pos);
+			if(!_botController->loopGather(pos)) {
+				if(!nextMode()) break;
+			}
+			
+			if(!testNextMode()) break;
+		}
+		else if(_mode==MANUAL) {
+			if(!_botController->loopManual()) {
+				if(!nextMode()) break;
+			}
+
+			if(!testNextMode()) break;
+		}
+		else { //SHUTDOWN
+			if(!_botController->loopShutDownRoutine()) break;
+			waitKey(1);
+		}
 	}
 
 }
@@ -33,12 +64,36 @@ Application::~Application() {
 	delete _cam;
 }
 
+void Application::adaptPosition(Position& pos) {
+	pos.y+=30;
+	//adaptOrientation(pos);
+}
+
 void Application::adaptOrientation(Position& pos) {
 	double horizAngle=0; //°, angle de la caméra % à l'horizontale, orienté vers le haut     <<<<<<<<<<<< ANGLE HORIZONTALE CAMERA HERE
 	double tmpY=pos.y;
 	horizAngle=-horizAngle*M_PI/180;
 	pos.y=cos(horizAngle)*tmpY+sin(horizAngle)*pos.z;
 	pos.z=-sin(horizAngle)*tmpY+cos(horizAngle)*pos.z;
+}
+
+void Application::setMode(Mode mode) {
+	_mode=mode;
+	_botController->setMode(mode);
+}
+
+bool Application::testNextMode() {
+	char key=waitKey(1);
+	if(key==27) return nextMode();
+	return true;
+}
+
+bool Application::nextMode() {
+	if(_optWithBot || _optForceWithRoutines) {
+		setMode(SHUTDOWN);
+		return true;
+	}
+	else return false;
 }
 
 void Application::initWindows() {
@@ -65,7 +120,7 @@ void Application::initWindows() {
 	
 	adjustableWindows["Settings"]=true;
 	adjustableWindows["Camera Settings"]=false;
-	adjustableWindows["Bras (vue de cote)"]=false;
+	adjustableWindows["Bras (vue de cote)"]=(_optMode==MANUAL);
 
 }
 
@@ -73,7 +128,8 @@ void Application::readArgs(int argc,char* argv[]) {
 	//Set default options
 	_optWithBot=false;
 	_optForceWithRoutines=false;
-	_optCamId=0;
+	_optCamId=1;
+	_optMode=FOLLOW;
 
 	//Read arguments
 	vector<string> args;
@@ -93,6 +149,11 @@ void Application::readArgs(int argc,char* argv[]) {
 				string value=arg.substr(equal+1);
 
 				if(option=="cam") _optCamId=stoi(value);
+				else if(option=="mode") {
+					if(value=="gather") _optMode=GATHER;
+					else if(value=="follow") _optMode=FOLLOW;
+					else _optMode=MANUAL;
+				}
 			}
 		}
 	}

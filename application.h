@@ -15,6 +15,12 @@ class Application {
 		~Application();
 
 	private:
+		void setMode(Mode mode);
+		bool testNextMode();
+		bool nextMode();
+
+		Mode _mode,_optMode;
+
 		Camera* _cam;
 		BallDetector* _ballDetector;
 		BotController* _botController;
@@ -24,6 +30,7 @@ class Application {
 		unsigned int _optCamId;
 
 		void readArgs(int argc,char* argv[]);
+		void adaptPosition(Position& pos);
 		void adaptOrientation(Position& pos);
 		void initWindows();
 };

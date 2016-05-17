@@ -9,9 +9,11 @@
 #include "logWindow.h"
 
 enum Mode {
-	ALL,
-	ONLY_DETECTION,
-	ONLY_CONTROL
+	FOLLOW,
+	GATHER,
+	MANUAL,
+	STARTUP,
+	SHUTDOWN
 };
 
 struct Position {
