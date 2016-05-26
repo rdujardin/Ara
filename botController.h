@@ -48,6 +48,8 @@ struct BotState {
 	double wristX,wristY,terminalXTh,length3Al;
 };
 
+void copyState(BotState& dst,BotState& src);
+
 class BotController : public Adjustable {
 	public:
 		BotController(bool withBot);
@@ -60,6 +62,7 @@ class BotController : public Adjustable {
 		bool loopManual();
 
 		bool loopStartUpRoutine();
+		bool loopPreShutDownRoutine();
 		bool loopShutDownRoutine();
 
 		void nextState();
@@ -73,18 +76,17 @@ class BotController : public Adjustable {
 		int _vehicleLeftSpeed, _vehicleRightSpeed;
 
 		void initStartUpRoutine();
+		void initPreShutDownRoutine();
 		void initShutDownRoutine();
 
 		void manual();
-
-		//std::vector<BotState> _routineTrajectory;
-		//std::vector<BotState>::iterator _rtIt;
 
 		std::vector<BotState> _trajectory;
 		std::vector<BotState>::iterator _trajIt;
 
 		static constexpr double _terminalAbsAlpha=1*M_PI/180;
 		static constexpr double _terminalAbsTheta=0.01*M_PI/180;
+		static constexpr double _terminalYOffset=0;
 		static constexpr double _length1=30;
 		static constexpr double _length2=30;
 		static constexpr double _length3=20;
@@ -119,7 +121,7 @@ class BotController : public Adjustable {
 		double conv(unsigned int servo,bool unit,double input);
 		bool checkWorkingZone();
 
-		void genTrajectory(Position a,Position b);
+		void genTrajectory(Position a,Position b,double step=0.3);
 };
 
 #endif

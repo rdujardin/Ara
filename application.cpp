@@ -79,6 +79,10 @@ Application::Application(int argc,char* argv[]) {
 
 			if(!testNextMode()) break;
 		}
+		else if(_mode==PRESHUTDOWN) {
+			if(!_botController->loopPreShutDownRoutine()) setMode(SHUTDOWN);
+			waitKey(1);
+		}
 		else { //SHUTDOWN
 			if(!_botController->loopShutDownRoutine()) break;
 			waitKey(1);
@@ -120,7 +124,7 @@ bool Application::testNextMode() {
 
 bool Application::nextMode() {
 	if(_optWithBot || _optForceWithRoutines) {
-		setMode(SHUTDOWN);
+		setMode(PRESHUTDOWN);
 		return true;
 	}
 	else return false;
@@ -183,7 +187,7 @@ void Application::readArgs(int argc,char* argv[]) {
 				else if(option=="mode") {
 					if(value=="gather") _optMode=GATHER;
 					else if(value=="follow") _optMode=FOLLOW;
-					else _optMode=MANUAL;
+					else if(value=="manual") _optMode=MANUAL;
 				}
 				else if(option=="ball") _optBall=value;
 			}

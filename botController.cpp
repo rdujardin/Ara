@@ -34,6 +34,21 @@ using namespace std;
 
 const Point BotController::_drawOrigin=Point(200,425);
 
+void copyState(BotState& dst,BotState& src) {
+	dst.alpha1=src.alpha1;
+	dst.alpha2=src.alpha2;
+	dst.alpha3=src.alpha3;
+	dst.theta0=src.theta0;
+	dst.theta3=src.theta3;
+	dst.terminalX=src.terminalX;
+	dst.terminalY=src.terminalY;
+	dst.terminalZ=src.terminalZ;
+	dst.wristX=src.wristX;
+	dst.wristY=src.wristY;
+	dst.terminalXTh=src.terminalXTh;
+	dst.length3Al=src.length3Al;
+}
+
 BotController::BotController(bool withBot) : Adjustable("Bras (vue de cote)") {
 
 	_withBot=withBot;
@@ -65,6 +80,7 @@ BotController::~BotController() {}
 void BotController::setMode(Mode mode) {
 	_mode=mode;
 	if(mode==STARTUP) initStartUpRoutine();
+	else if(mode==PRESHUTDOWN) initPreShutDownRoutine();
 	else if(mode==SHUTDOWN) initShutDownRoutine();
 	else return;
 }
@@ -138,9 +154,11 @@ bool BotController::checkWorkingZone() {
 	w=w && _state.alpha3>=0*M_PI/180 && _state.alpha3<=180*M_PI/180;
 	w=w && _state.theta3>=0*M_PI/180 && _state.theta3<=180*M_PI/180;
 
-	w=w && _state.terminalY>0;
+	w=w && _state.terminalY>0+_terminalYOffset;
 	w=w && _state.terminalZ>=20;
 	w=w && _state.terminalZ<45;
+
+	w=w && _state.wristY>0;
 
 	return w;
 }
@@ -366,6 +384,19 @@ bool BotController::loopStartUpRoutine() {
 	return true;
 }
 
+void BotController::initPreShutDownRoutine() {
+
+	Position start,end;
+	start.x=_state.terminalX;
+	start.y=_state.terminalY;
+	start.z=_state.terminalZ;
+	end.x=0;
+	end.y=35;
+	end.z=22;
+	genTrajectory(start,end);
+
+}
+
 void BotController::initShutDownRoutine() {
 
 	_state.terminalX=0;
@@ -428,6 +459,17 @@ void BotController::initShutDownRoutine() {
 
 }
 
+bool BotController::loopPreShutDownRoutine() {
+	if(_trajIt==_trajectory.end()) return false;
+	else {
+		copyState(_state,*_trajIt);
+		_state=computeAngles(_state);
+		loopAngles();
+		_trajIt++;
+		return true;
+	}
+}
+
 bool BotController::loopShutDownRoutine() {
 	_state.theta0=conv(0,true,(*_trajIt).theta0*M_PI/180);
 	_state.alpha1=conv(1,true,(*_trajIt).alpha1*M_PI/180);
@@ -444,7 +486,7 @@ bool BotController::loopShutDownRoutine() {
 	return true;
 }
 
-void BotController::genTrajectory(Position a,Position b) {
+void BotController::genTrajectory(Position a,Position b,double step) {
 	BotState stA,stB;
 	stA.terminalX=a.x;
 	stA.terminalY=a.y;
@@ -457,8 +499,6 @@ void BotController::genTrajectory(Position a,Position b) {
 	vect.terminalX=b.x-a.x;
 	vect.terminalY=b.y-a.y;
 	vect.terminalZ=b.z-a.z;
-
-	double step=1.0; //1 cm
 
 	double norm=sqrt(vect.terminalX*vect.terminalX+vect.terminalY*vect.terminalY+vect.terminalZ*vect.terminalZ);
 	vect.terminalX=vect.terminalX/norm*step;
@@ -476,6 +516,7 @@ void BotController::genTrajectory(Position a,Position b) {
 	}
 
 	_trajectory.push_back(stB);
+	_trajIt=_trajectory.begin();
 }
 
 void BotController::checkBatteryLevel() {

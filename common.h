@@ -42,6 +42,7 @@ enum Mode {
 	GATHER,
 	MANUAL,
 	STARTUP,
+	PRESHUTDOWN,
 	SHUTDOWN
 };
 
