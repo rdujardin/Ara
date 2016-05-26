@@ -199,7 +199,7 @@ Cas 3D:
 	KF.statePost.at<float>(4)=0;
 	KF.statePost.at<float>(5)=0;
 	setIdentity(KF.measurementMatrix);
-	setIdentity(KF.processNoiseCov,Scalar::all(0.05)); //1e-2 Rapidité du "rattrapage" de l'estimation
+	setIdentity(KF.processNoiseCov,Scalar::all(0.001)); //1e-2 Rapidité du "rattrapage" de l'estimation
 	setIdentity(KF.measurementNoiseCov,Scalar::all(10));
 	setIdentity(KF.errorCovPost,Scalar::all(1));
 }
