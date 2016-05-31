@@ -73,6 +73,7 @@ bool BotController::loopRoutine() {
 	else if(_mode==PRESHUTDOWN) ret=BotTrajectories::loopPreShutDownRoutine(_state,_trajectory,_trajIt);
 	else if(_mode==SHUTDOWN) ret=BotTrajectories::loopShutDownRoutine(_state,_trajectory,_trajIt);
 	loopAngles();
+	_trajIt++;
 	Timer::wait(20);
 	return ret;
 }

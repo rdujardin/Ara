@@ -57,7 +57,7 @@ class BotController : public Adjustable {
 		void nextState();
 		
 		virtual void adjusted(std::string name,int val);
-	private:
+	//private:
 		bool _withBot;
 		Mode _mode;
 

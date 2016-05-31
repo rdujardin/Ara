@@ -197,10 +197,8 @@ bool BotTrajectories::loopStartUpRoutine(BotState& _state,Trajectory& _trajector
 	_state.theta3=conv(4,true,(*_trajIt).theta3*M_PI/180);
 	_state.length3Al=_length3*cos((*_trajIt).theta3*M_PI/180);
 	_state.wristX=_length1*cos((*_trajIt).alpha1*M_PI/180)+_length2*cos((*_trajIt).alpha1*M_PI/180+((*_trajIt).alpha2*M_PI/180));
-	_trajIt++;
+	_state.wristY=99;
 	if(_trajIt==_trajectory.end()) return false;
-		
-	//checkBatteryLevel();
 	return true;
 }
 
@@ -209,7 +207,6 @@ bool BotTrajectories::loopPreShutDownRoutine(BotState& _state,Trajectory& _traje
 	else {
 		copyState(_state,*_trajIt);
 		_state=computeAngles(_state);
-		_trajIt++;
 		return true;
 	}
 }
@@ -222,9 +219,8 @@ bool BotTrajectories::loopShutDownRoutine(BotState& _state,Trajectory& _trajecto
 	_state.theta3=conv(4,true,(*_trajIt).theta3*M_PI/180);
 	_state.length3Al=_length3*cos((*_trajIt).theta3*M_PI/180);
 	_state.wristX=_length1*cos((*_trajIt).alpha1*M_PI/180)+_length2*cos((*_trajIt).alpha1*M_PI/180+((*_trajIt).alpha2*M_PI/180));
-	_trajIt++;
-	if(_trajIt==_trajectory.end()) return false;	
-	//checkBatteryLevel();
+	_state.wristY=99;
+	if(_trajIt==_trajectory.end()) return false;
 	return true;
 }
 
