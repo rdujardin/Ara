@@ -46,7 +46,7 @@ class Application {
 	private:
 		void setMode(Mode mode);
 		bool testNextMode();
-		bool nextMode();
+		bool shutdown();
 
 		Mode _mode,_optMode;
 

@@ -1,5 +1,5 @@
 /*
-common.h (part of Ara, https://github.com/rdujardin/Ara)
+botHardware.h (part of Ara, https://github.com/rdujardin/Ara)
 
 Copyright (c) 2016, Raphaël Dujardin (rdujardin) & Jean Boehm (jboehm1)
 All rights reserved.
@@ -27,55 +27,27 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef COMMON_H
-#define COMMON_H
-
-#include <thread>
-#include <mutex>
+#include <wiringPi.h>
+#include <wiringSerial.h>
 #include <iostream>
-#include <queue>
-#include <ctime>
-#include "logWindow.h"
+#include "common.h"
 
-enum Mode {
-	FOLLOW,
-	GATHER,
-	MANUAL,
-	STARTUP,
-	TRAJECTORY,
-	PRESHUTDOWN,
-	SHUTDOWN
+#ifndef BOT_HARDWARE_H
+#define BOT_HARDWARE_H
+
+class BotHardware {
+public:
+	BotHardware(bool withBot);
+	void sendToMotors(BotState state);
+	void sendToVehicle(int vehicleLeftSpeed,int vehicleRightSpeed);
+	void checkBatteryLevel();
+	int batteryLevel();
+private:
+	bool _withBot;
+	int _fd;
+	void sendInt(int v);
+	void sendAngle(double angle);
+	int _batteryLevel;
 };
-
-struct Position {
-	bool valid;
-	double x,y,z;
-};
-static std::queue<Position> detection;
-
-struct BotState {
-	double alpha1,alpha2,alpha3,theta0,theta3;
-	double terminalX,terminalY,terminalZ;
-	double wristX,wristY,terminalXTh,length3Al;
-};
-
-void copyState(BotState& dst,BotState& src);
-
-#define WORK_W 640
-#define WORK_H 480
-
-static double _terminalAbsAlpha=1*M_PI/180;
-static double _terminalAbsTheta=0.01*M_PI/180;
-static double _terminalYOffset=0;
-static double _length1=30;
-static double _length2=30;
-static double _length3=20;
-static double _length3Th=_length3*cos(_terminalAbsAlpha);
-
-typedef std::vector<BotState> Trajectory;
-typedef std::vector<BotState>::iterator TrajIt;
-
-double conv(unsigned int servo,bool unit,double input);
 
 #endif
-

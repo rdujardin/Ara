@@ -1,5 +1,5 @@
 /*
-common.h (part of Ara, https://github.com/rdujardin/Ara)
+botTrajectories.h (part of Ara, https://github.com/rdujardin/Ara)
 
 Copyright (c) 2016, Raphaël Dujardin (rdujardin) & Jean Boehm (jboehm1)
 All rights reserved.
@@ -27,55 +27,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef COMMON_H
-#define COMMON_H
+#ifndef BOT_TRAJECTORIES_H
+#define BOT_TRAJECTORIES_H
 
-#include <thread>
-#include <mutex>
-#include <iostream>
-#include <queue>
-#include <ctime>
-#include "logWindow.h"
+#include "common.h"
 
-enum Mode {
-	FOLLOW,
-	GATHER,
-	MANUAL,
-	STARTUP,
-	TRAJECTORY,
-	PRESHUTDOWN,
-	SHUTDOWN
+class BotTrajectories {
+public:
+	static void genTrajectory(Position a,Position b,Trajectory& _trajectory,TrajIt& _trajIt,double step=0.3);
+	static BotState computeAngles(BotState state);
+
+	static void initStartUpRoutine(Trajectory& _trajectory,TrajIt& _trajIt,BotState& _state);
+	static void initPreShutDownRoutine(Trajectory& _trajectory,TrajIt& _trajIt,BotState& _state);
+	static void initShutDownRoutine(Trajectory& _trajectory,TrajIt& _trajIt,BotState& _state);
+	static bool loopStartUpRoutine(BotState& _state,Trajectory& _trajectory,TrajIt& _trajIt);
+	static bool loopPreShutDownRoutine(BotState& _state,Trajectory& _trajectory,TrajIt& _trajIt);
+	static bool loopShutDownRoutine(BotState& _state,Trajectory& _trajectory,TrajIt& _trajIt);
 };
-
-struct Position {
-	bool valid;
-	double x,y,z;
-};
-static std::queue<Position> detection;
-
-struct BotState {
-	double alpha1,alpha2,alpha3,theta0,theta3;
-	double terminalX,terminalY,terminalZ;
-	double wristX,wristY,terminalXTh,length3Al;
-};
-
-void copyState(BotState& dst,BotState& src);
-
-#define WORK_W 640
-#define WORK_H 480
-
-static double _terminalAbsAlpha=1*M_PI/180;
-static double _terminalAbsTheta=0.01*M_PI/180;
-static double _terminalYOffset=0;
-static double _length1=30;
-static double _length2=30;
-static double _length3=20;
-static double _length3Th=_length3*cos(_terminalAbsAlpha);
-
-typedef std::vector<BotState> Trajectory;
-typedef std::vector<BotState>::iterator TrajIt;
-
-double conv(unsigned int servo,bool unit,double input);
 
 #endif
-

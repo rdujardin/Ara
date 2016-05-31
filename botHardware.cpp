@@ -1,5 +1,5 @@
 /*
-botController.h (part of Ara, https://github.com/rdujardin/Ara)
+botHardware.cpp (part of Ara, https://github.com/rdujardin/Ara)
 
 Copyright (c) 2016, Raphaël Dujardin (rdujardin) & Jean Boehm (jboehm1)
 All rights reserved.
@@ -27,55 +27,67 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef BOT_CONTROLLER_H
-#define BOT_CONTROLLER_H
-
-#include <opencv2/opencv.hpp>
-#include <cmath>
-#include <sstream>
-#include <iostream>
-
-#include "common.h"
-#include "adjustable.h"
-#include "timer.h"
 #include "botHardware.h"
-#include "botDraw.h"
-#include "botTrajectories.h"
 
-class BotController : public Adjustable {
-	public:
-		BotController(bool withBot);
-		~BotController();
+using namespace std;
 
-		void setMode(Mode mode);
+BotHardware::BotHardware(bool withBot) {
+	_withBot=withBot;
+	_batteryLevel=-1;
+	if(_withBot)
+		if((_fd=serialOpen("/dev/ttyUSB0"/*0*/,9600))<0) throw -1;
+}
 
-		bool follow(Position detection);
-		bool loopGather(Position detection);
-		bool loopManual();
-		bool loopRoutine();
+void BotHardware::sendInt(int v) {
+	if(_withBot) serialPutchar(_fd,v);
+}
 
-		void nextState();
-		
-		virtual void adjusted(std::string name,int val);
-	private:
-		bool _withBot;
-		Mode _mode;
+void BotHardware::sendAngle(double angle) {
+	int ang=(int) angle;
+	cout << ang << ", ";
+	sendInt(ang);
+}
 
-		BotHardware* _hardware;
+void BotHardware::sendToMotors(BotState state) {
+	cout << "## SENT " << string(_withBot?"(really)":"(virtually)") << " ";
 
-		BotState _state;
-		int _vehicleLeftSpeed, _vehicleRightSpeed;
+	sendInt(250);	
+	sendAngle(state.theta0*180/M_PI*180/140);
+	sendAngle(state.alpha1*180/M_PI*180/140);
+	sendAngle(state.alpha2*180/M_PI);
+	sendAngle(state.alpha3*180/M_PI);
+	sendAngle(state.theta3*180/M_PI);
 
-		void manual();
+	cout << endl;
 
-		Trajectory _trajectory;
-		TrajIt _trajIt;
-		
-		BotState computeAngles(BotState state);
+	delay(30);
+}
 
-		bool loopAngles();
-		bool checkWorkingZone();
-};
+void BotHardware::sendToVehicle(int vehicleLeftSpeed,int vehicleRightSpeed) {
+	sendInt(251);
+	sendInt(128+vehicleLeftSpeed);
+	sendInt(128+vehicleRightSpeed);
+	delay(30);
+}
 
-#endif
+void BotHardware::checkBatteryLevel() {
+	if(_withBot) {
+		char ret[100];
+		ret[0]=0;
+		int i=0;
+		while (serialDataAvail (_fd))
+		{
+	  		ret[i]= serialGetchar (_fd) ;
+			i++;
+		}
+		ret[i]=0;
+		int val=-1;
+		if(strlen(ret)>0) val=ret[0];
+		if(val<=100) _batteryLevel=val;
+		else _batteryLevel=-2;
+	}
+}
 
+int BotHardware::batteryLevel() {
+	return _batteryLevel;
+}

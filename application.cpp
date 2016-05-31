@@ -49,7 +49,7 @@ Application::Application(int argc,char* argv[]) {
 
 	while(true) {
 		if(_mode==STARTUP) {
-			if(!_botController->loopStartUpRoutine()) setMode(_optMode);
+			if(!_botController->loopRoutine()) setMode(_optMode);
 			waitKey(1);
 		}
 		else if(_mode==FOLLOW) {
@@ -57,7 +57,7 @@ Application::Application(int argc,char* argv[]) {
 			_ballDetector->loop(pos);
 			adaptPosition(pos);
 			if(!_botController->follow(pos)) {
-				if(!nextMode()) break;
+				if(!shutdown()) break;
 			}
 
 			if(!testNextMode()) break;
@@ -67,24 +67,24 @@ Application::Application(int argc,char* argv[]) {
 			_ballDetector->loop(pos);
 			adaptPosition(pos);
 			if(!_botController->loopGather(pos)) {
-				if(!nextMode()) break;
+				if(!shutdown()) break;
 			}
 			
 			if(!testNextMode()) break;
 		}
 		else if(_mode==MANUAL) {
 			if(!_botController->loopManual()) {
-				if(!nextMode()) break;
+				if(!shutdown()) break;
 			}
 
 			if(!testNextMode()) break;
 		}
 		else if(_mode==PRESHUTDOWN) {
-			if(!_botController->loopPreShutDownRoutine()) setMode(SHUTDOWN);
+			if(!_botController->loopRoutine()) setMode(SHUTDOWN);
 			waitKey(1);
 		}
 		else { //SHUTDOWN
-			if(!_botController->loopShutDownRoutine()) break;
+			if(!_botController->loopRoutine()) break;
 			waitKey(1);
 		}
 		logs.processRepainting();
@@ -118,11 +118,11 @@ void Application::setMode(Mode mode) {
 
 bool Application::testNextMode() {
 	char key=waitKey(1);
-	if(key==27) return nextMode();
+	if(key==27) return shutdown();
 	return true;
 }
 
-bool Application::nextMode() {
+bool Application::shutdown() {
 	if(_optWithBot || _optForceWithRoutines) {
 		setMode(PRESHUTDOWN);
 		return true;
