@@ -37,16 +37,14 @@ BotController::BotController(bool withBot) : Adjustable("Bras (vue de cote)") {
 	_withBot=withBot;
 	_hardware=new BotHardware(withBot);
 
-	_state.terminalX=0;
-	_state.terminalY=35;
-	_state.terminalZ=22;
+	_state.set(cartesian,terminalX,0,terminalY,35,terminalZ,22);
 
 	_vehicleLeftSpeed=0;
 	_vehicleRightSpeed=0;
 
-	_params["X = "]=_state.terminalX*2+70;
-	_params["Y = "]=_state.terminalY;
-	_params["Z = "]=_state.terminalZ*2+40;
+	_params["X = "]=_state.get(terminalX)*2+70;
+	_params["Y = "]=_state.get(terminalY);
+	_params["Z = "]=_state.get(terminalZ)*2+40;
 	
 	makeAdjustable("X = ",140);
 	makeAdjustable("Y = ",70);
@@ -72,7 +70,7 @@ bool BotController::loopRoutine() {
 	if(_mode==STARTUP) ret=BotTrajectories::loopStartUpRoutine(_state,_trajectory,_trajIt);
 	else if(_mode==PRESHUTDOWN) ret=BotTrajectories::loopPreShutDownRoutine(_state,_trajectory,_trajIt);
 	else if(_mode==SHUTDOWN) ret=BotTrajectories::loopShutDownRoutine(_state,_trajectory,_trajIt);
-	loopAngles();
+	loopAngles(true);
 	_trajIt++;
 	Timer::wait(20);
 	return ret;
@@ -80,10 +78,7 @@ bool BotController::loopRoutine() {
 
 bool BotController::follow(Position detection) {
 
-	_state.terminalX=detection.x;
-	_state.terminalY=detection.y;
-	_state.terminalZ=detection.z;
-	_state=BotTrajectories::computeAngles(_state);
+	_state.set(cartesian,terminalX,detection.x,terminalY,detection.y,terminalZ,detection.z);
 	loopAngles();
 	return true;
 
@@ -95,39 +90,30 @@ bool BotController::loopGather(Position detection) {
 }
 
 bool BotController::loopManual() {
-	manual();	
+	loopAngles();
 	return true;
 }
 
-bool BotController::checkWorkingZone() {
-	bool w=true;
-	w=w && _state.theta0>=0*M_PI/180 && _state.theta0<=140*M_PI/180;
-	w=w && _state.alpha1>=0*M_PI/180 && _state.alpha1<=140*M_PI/180;
-	w=w && _state.alpha2>=0*M_PI/180 && _state.alpha2<=180*M_PI/180;
-	w=w && _state.alpha3>=0*M_PI/180 && _state.alpha3<=180*M_PI/180;
-	w=w && _state.theta3>=0*M_PI/180 && _state.theta3<=180*M_PI/180;
+bool BotController::loopAngles(bool unsafe) {
+	logs["Computed1"].reset() << "Computed angles ## ";
+	logs["Computed2"].reset() << "Theta 0 : " << _state.get(theta0)*180/M_PI;
+	logs["Computed3"].reset() << "Alpha 1 : " << _state.get(alpha1)*180/M_PI;
+	logs["Computed4"].reset() << "Alpha 2 : " << _state.get(alpha2)*180/M_PI;
+	logs["Computed5"].reset() << "Alpha 3 : " << _state.get(alpha3)*180/M_PI;
+	logs["Computed6"].reset() << "Theta 3 : " << _state.get(theta3)*180/M_PI;
+	logs.refresh();
 
-	w=w && _state.terminalY>0+_terminalYOffset;
-	w=w && _state.terminalZ>=20;
-	w=w && _state.terminalZ<45;
-
-	w=w && _state.wristY>0;
-
-	return w;
-}
-
-bool BotController::loopAngles() {
 	Mat draw1=Mat::zeros(BotDraw::_drawHeight,BotDraw::_drawWidth,CV_8UC3);
 	Mat draw2=Mat::zeros(BotDraw::_drawHeight,BotDraw::_drawWidth,CV_8UC3);
 
 	//VÉRIFICATION DE LA ZONE DE TRAVAIL
-	bool workZoneCheck=checkWorkingZone();
+	bool workZoneCheck=_state.checkWorkingZone();
 
 	//Draw axis
 	BotDraw::drawAxis(draw1,draw2);
 	
 	//Draw bot
-	BotDraw::drawBot(draw1,draw2,_state,workZoneCheck);
+	BotDraw::drawBot(draw1,draw2,_state,workZoneCheck || unsafe);
 
 	cout << "." << endl;
 	
@@ -144,14 +130,7 @@ bool BotController::loopAngles() {
 void BotController::adjusted(std::string name,int val) {
 	if(_mode==MANUAL) {
 		_params[name]=val;
-		_state.terminalX=(_params["X = "]-70)/2;
-		_state.terminalY=_params["Y = "];
-		_state.terminalZ=(_params["Z = "]-40)/2;
-		manual();
+		_state.set(cartesian,terminalX,(_params["X = "]-70)/2,terminalY,_params["Y = "],terminalZ,(_params["Z = "]-40)/2);
+		loopAngles();
 	}
-}
-
-void BotController::manual() {
-	_state=BotTrajectories::computeAngles(_state);
-	loopAngles();
 }

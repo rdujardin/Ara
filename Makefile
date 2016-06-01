@@ -6,8 +6,8 @@ clean:
 rebuild: clean
 	rm -rf ara
 
-ara: obj/application.o obj/common.o obj/main.o obj/ballDetector.o obj/camera.o obj/timer.o obj/adjustable.o obj/hsv.o obj/filters.o obj/hough.o obj/detectors.o obj/botController.o obj/botHardware.o obj/botDraw.o obj/botTrajectories.o obj/logWindow.o
-	g++ -o ara obj/application.o obj/common.o obj/main.o obj/ballDetector.o obj/camera.o obj/timer.o obj/adjustable.o obj/hsv.o obj/filters.o obj/hough.o obj/detectors.o obj/botController.o obj/botHardware.o obj/botDraw.o obj/botTrajectories.o obj/logWindow.o `pkg-config --cflags --libs opencv` -lwiringPi -lpthread -std=c++0x -g -O4
+ara: obj/application.o obj/common.o obj/main.o obj/ballDetector.o obj/camera.o obj/timer.o obj/adjustable.o obj/hsv.o obj/filters.o obj/hough.o obj/detectors.o obj/botController.o obj/botHardware.o obj/botDraw.o obj/botTrajectories.o obj/botState.o obj/logWindow.o
+	g++ -o ara obj/application.o obj/common.o obj/main.o obj/ballDetector.o obj/camera.o obj/timer.o obj/adjustable.o obj/hsv.o obj/filters.o obj/hough.o obj/detectors.o obj/botController.o obj/botHardware.o obj/botDraw.o obj/botTrajectories.o obj/botState.o obj/logWindow.o `pkg-config --cflags --libs opencv` -lwiringPi -lpthread -std=c++0x -g -O4
 
 obj/application.o: application.cpp
 	g++ -o obj/application.o -c application.cpp -std=c++0x -g -O4
@@ -53,6 +53,9 @@ obj/botDraw.o: botDraw.cpp
 
 obj/botTrajectories.o: botTrajectories.cpp
 	g++ -o obj/botTrajectories.o -c botTrajectories.cpp -std=c++0x -g -O4
+
+obj/botState.o: botState.cpp
+	g++ -o obj/botState.o -c botState.cpp -std=c++0x -g -O4
 
 obj/logWindow.o: logWindow.cpp
 	g++ -o obj/logWindow.o -c logWindow.cpp -std=c++0x -g -O4

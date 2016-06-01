@@ -48,15 +48,15 @@ void BotHardware::sendAngle(double angle) {
 	sendInt(ang);
 }
 
-void BotHardware::sendToMotors(BotState state) {
+void BotHardware::sendToMotors(BotState& state) {
 	cout << "## SENT " << string(_withBot?"(really)":"(virtually)") << " ";
 
 	sendInt(250);	
-	sendAngle(state.theta0*180/M_PI*180/140);
-	sendAngle(state.alpha1*180/M_PI*180/140);
-	sendAngle(state.alpha2*180/M_PI);
-	sendAngle(state.alpha3*180/M_PI);
-	sendAngle(state.theta3*180/M_PI);
+	sendAngle(state.get(theta0)*180/M_PI*180/140);
+	sendAngle(state.get(alpha1)*180/M_PI*180/140);
+	sendAngle(state.get(alpha2)*180/M_PI);
+	sendAngle(state.get(alpha3)*180/M_PI);
+	sendAngle(state.get(theta3)*180/M_PI);
 
 	cout << endl;
 

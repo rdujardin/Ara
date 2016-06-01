@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common.h"
 #include "adjustable.h"
 #include "timer.h"
+#include "botState.h"
 #include "botHardware.h"
 #include "botDraw.h"
 #include "botTrajectories.h"
@@ -66,15 +67,13 @@ class BotController : public Adjustable {
 		BotState _state;
 		int _vehicleLeftSpeed, _vehicleRightSpeed;
 
-		void manual();
-
 		Trajectory _trajectory;
 		TrajIt _trajIt;
 		
 		BotState computeAngles(BotState state);
 
-		bool loopAngles();
-		bool checkWorkingZone();
+		bool loopAngles(bool unsafe=false);
+		
 };
 
 #endif

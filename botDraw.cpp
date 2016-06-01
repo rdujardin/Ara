@@ -55,29 +55,29 @@ void BotDraw::drawAxis(Mat& draw1,Mat& draw2) {
 	putText(draw1,oss.str(),Point(_drawWidth-128,_drawHeight-25),1,1,Scalar(0,255,255),1);*/
 }
 
-void BotDraw::drawBot(Mat& draw1,Mat& draw2,BotState _state,bool workZoneCheck) {
-	double alpha1=conv(1,false,_state.alpha1);
-	double alpha2=conv(2,false,_state.alpha2);
-	double alpha3=conv(3,false,_state.alpha3);
-	double theta0=conv(0,false,_state.theta0);
-	double theta3=conv(4,false,_state.theta3);
+void BotDraw::drawBot(Mat& draw1,Mat& draw2,BotState& _state,bool workZoneCheck) {
+	double al1=conv(1,false,_state.get(alpha1));
+	double al2=conv(2,false,_state.get(alpha2));
+	double al3=conv(3,false,_state.get(alpha3));
+	double th0=conv(0,false,_state.get(theta0));
+	double th3=conv(4,false,_state.get(theta3));
 
-	Point p1(_drawOrigin.x+_drawScale*_length1*cos(alpha1),_drawOrigin.y-_drawScale*_length1*sin(alpha1));
-	Point p2(p1.x+_drawScale*_length2*cos(alpha2+alpha1),p1.y-_drawScale*_length2*sin(alpha2+alpha1));
-	Point p3(p2.x+_drawScale*_state.length3Al*cos(alpha1+alpha2+alpha3),p2.y-_drawScale*_state.length3Al*sin(alpha1+alpha2+alpha3));
+	Point p1(_drawOrigin.x+_drawScale*_length1*cos(al1),_drawOrigin.y-_drawScale*_length1*sin(al1));
+	Point p2(p1.x+_drawScale*_length2*cos(al2+al1),p1.y-_drawScale*_length2*sin(al2+al1));
+	Point p3(p2.x+_drawScale*_state.get(length3Al)*cos(al1+al2+al3),p2.y-_drawScale*_state.get(length3Al)*sin(al1+al2+al3));
 	
-	Point pp1(_drawOrigin.x+_drawScale*_state.wristX*cos(theta0),_drawOrigin.y-_drawScale*_state.wristX*sin(theta0));
-	Point pp2(pp1.x+_drawScale*_length3Th*cos(theta0+theta3),pp1.y-_drawScale*_length3Th*sin(theta0+theta3));
+	Point pp1(_drawOrigin.x+_drawScale*_state.get(wristX)*cos(th0),_drawOrigin.y-_drawScale*_state.get(wristX)*sin(th0));
+	Point pp2(pp1.x+_drawScale*_length3Th*cos(th0+th3),pp1.y-_drawScale*_length3Th*sin(th0+th3));
 	
 	if(workZoneCheck) {
 		line(draw1,_drawOrigin,p1,Scalar(0,0,255),4);
 		line(draw1,p1,p2,Scalar(0,255,0),4);
 		line(draw1,p2,p3,Scalar(255,0,0),4);
-		circle(draw1,Point(_drawOrigin.x+_drawScale*_state.terminalXTh,_drawOrigin.y-_drawScale*_state.terminalY),10,Scalar(240,0,0),2);
+		circle(draw1,Point(_drawOrigin.x+_drawScale*_state.get(terminalXTh),_drawOrigin.y-_drawScale*_state.get(terminalY)),10,Scalar(240,0,0),2);
 		
 		line(draw2,_drawOrigin,pp1,Scalar(0,255,255),4);
 		line(draw2,pp1,pp2,Scalar(255,0,0),4);
-		circle(draw2,Point(_drawOrigin.x+_drawScale*_state.terminalX,_drawOrigin.y-_drawScale*_state.terminalZ),10,Scalar(240,0,0),2);
+		circle(draw2,Point(_drawOrigin.x+_drawScale*_state.get(terminalX),_drawOrigin.y-_drawScale*_state.get(terminalZ)),10,Scalar(240,0,0),2);
 		
 		
 	}
@@ -86,23 +86,23 @@ void BotDraw::drawBot(Mat& draw1,Mat& draw2,BotState _state,bool workZoneCheck) 
 	}
 
 	ostringstream ossPos,oss1,oss2,oss3,ossTh0,ossTh3;
-	ossPos << " (" << _state.terminalX << "," << _state.terminalY << "," << _state.terminalZ << ")";
-	putText(draw1,ossPos.str(),Point(_drawOrigin.x+_drawScale*_state.terminalXTh,_drawOrigin.y-_drawScale*_state.terminalY),1,1,Scalar(255,0,0),1);
-	oss1 << "Alpha1 = " << _state.alpha1*180/M_PI;
+	ossPos << " (" << _state.get(terminalX) << "," << _state.get(terminalY) << "," << _state.get(terminalZ) << ")";
+	putText(draw1,ossPos.str(),Point(_drawOrigin.x+_drawScale*_state.get(terminalXTh),_drawOrigin.y-_drawScale*_state.get(terminalY)),1,1,Scalar(255,0,0),1);
+	oss1 << "Alpha1 = " << _state.get(alpha1)*180/M_PI;
 	putText(draw1,oss1.str(),Point(_drawWidth-220,20),1,1,Scalar(0,0,255),1);
-	oss2 << "Alpha2 = " << _state.alpha2*180/M_PI;
+	oss2 << "Alpha2 = " << _state.get(alpha2)*180/M_PI;
 	putText(draw1,oss2.str(),Point(_drawWidth-220,40),1,1,Scalar(0,255,0),1);
-	oss3 << "Alpha3 = " << _state.alpha3*180/M_PI;
+	oss3 << "Alpha3 = " << _state.get(alpha3)*180/M_PI;
 	putText(draw1,oss3.str(),Point(_drawWidth-220,60),1,1,Scalar(255,0,0),1);
-	ossTh0 << "Theta0 = " << _state.theta0*180/M_PI;
+	ossTh0 << "Theta0 = " << _state.get(theta0)*180/M_PI;
 	putText(draw2,ossTh0.str(),Point(_drawWidth-220,20),1,1,Scalar(0,255,255),1);
-	ossTh3 << "Theta3 = " << _state.theta3*180/M_PI;
+	ossTh3 << "Theta3 = " << _state.get(theta3)*180/M_PI;
 	putText(draw2,ossTh3.str(),Point(_drawWidth-220,40),1,1,Scalar(255,0,0),1);
 
 	ostringstream ossInx,ossIny,ossInz;
-	ossInx << "Input X : " << _state.terminalX;
-	ossIny << "Input Y : " << _state.terminalY;
-	ossInz << "Input Z : " << _state.terminalZ;
+	ossInx << "Input X : " << _state.get(terminalX);
+	ossIny << "Input Y : " << _state.get(terminalY);
+	ossInz << "Input Z : " << _state.get(terminalZ);
 	putText(draw1,ossInx.str(),Point(10,10),1,1,Scalar(255,255,255),1);
 	putText(draw1,ossIny.str(),Point(10,30),1,1,Scalar(255,255,255),1);
 	putText(draw1,ossInz.str(),Point(10,50),1,1,Scalar(255,255,255),1);

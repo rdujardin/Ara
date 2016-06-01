@@ -34,17 +34,12 @@ using namespace cv;
 
 Application::Application(int argc,char* argv[]) {
 	readArgs(argc,argv);
-
 	_cam=new Camera(true,_optCamId);
 	if (!_cam->isOpened()) throw -1;
-
 	_mode=(_optWithBot || _optForceWithRoutines)?STARTUP:_optMode;
-
 	initWindows();
-
 	_ballDetector=new BallDetector(_cam,_optBall);
 	_botController=new BotController(_optWithBot);
-
 	_botController->setMode(_mode);
 
 	while(true) {

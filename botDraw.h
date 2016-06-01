@@ -34,11 +34,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cmath>
 #include <sstream>
 #include "common.h"
+#include "botState.h"
 
 class BotDraw {
 public:
 	static void drawAxis(cv::Mat& draw1,cv::Mat& draw2);
-	static void drawBot(cv::Mat& draw1,cv::Mat& draw2,BotState _state,bool workZoneCheck);
+	static void drawBot(cv::Mat& draw1,cv::Mat& draw2,BotState& _state,bool workZoneCheck);
 	static constexpr unsigned int _drawWidth=640;
 	static constexpr unsigned int _drawHeight=480;
 private:

@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <wiringSerial.h>
 #include <iostream>
 #include "common.h"
+#include "botState.h"
 
 #ifndef BOT_HARDWARE_H
 #define BOT_HARDWARE_H
@@ -38,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class BotHardware {
 public:
 	BotHardware(bool withBot);
-	void sendToMotors(BotState state);
+	void sendToMotors(BotState& state);
 	void sendToVehicle(int vehicleLeftSpeed,int vehicleRightSpeed);
 	void checkBatteryLevel();
 	int batteryLevel();

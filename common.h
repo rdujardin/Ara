@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <queue>
 #include <ctime>
+#include <cmath>
 #include "logWindow.h"
 
 enum Mode {
@@ -53,29 +54,11 @@ struct Position {
 };
 static std::queue<Position> detection;
 
-struct BotState {
-	double alpha1,alpha2,alpha3,theta0,theta3;
-	double terminalX,terminalY,terminalZ;
-	double wristX,wristY,terminalXTh,length3Al;
-};
-
-void copyState(BotState& dst,BotState& src);
-
 #define WORK_W 640
 #define WORK_H 480
 
-static double _terminalAbsAlpha=1*M_PI/180;
-static double _terminalAbsTheta=0.01*M_PI/180;
-static double _terminalYOffset=0;
-static double _length1=30;
-static double _length2=30;
-static double _length3=20;
-static double _length3Th=_length3*cos(_terminalAbsAlpha);
-
-typedef std::vector<BotState> Trajectory;
-typedef std::vector<BotState>::iterator TrajIt;
-
-double conv(unsigned int servo,bool unit,double input);
+#define neart(x,y,t) (abs(x-y)<=t)
+#define near(x,y) (abs(x-y)<=0.01)
 
 #endif
 

@@ -29,32 +29,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "botTrajectories.h"
 
+using namespace std;
+
 void BotTrajectories::genTrajectory(Position a,Position b,Trajectory& _trajectory,TrajIt& _trajIt,double step) {
 	BotState stA,stB;
-	stA.terminalX=a.x;
-	stA.terminalY=a.y;
-	stA.terminalZ=a.z;
-	stB.terminalX=b.x;
-	stB.terminalY=b.y;
-	stB.terminalZ=b.z;
+	stA.set(cartesian,terminalX,a.x,terminalY,a.y,terminalZ,a.z);
+	stB.set(cartesian,terminalX,b.x,terminalY,b.y,terminalZ,b.z);
 
 	BotState vect;
-	vect.terminalX=b.x-a.x;
-	vect.terminalY=b.y-a.y;
-	vect.terminalZ=b.z-a.z;
-
-	double norm=sqrt(vect.terminalX*vect.terminalX+vect.terminalY*vect.terminalY+vect.terminalZ*vect.terminalZ);
-	vect.terminalX=vect.terminalX/norm*step;
-	vect.terminalY=vect.terminalY/norm*step;
-	vect.terminalZ=vect.terminalZ/norm*step;
+	vect.setUnsafe(cartesian,terminalX,b.x-a.x,terminalY,b.y-a.y,terminalZ,b.z-a.z);
+	double norm=sqrt(vect.get(terminalX)*vect.get(terminalX)+vect.get(terminalY)*vect.get(terminalY)+vect.get(terminalZ)*vect.get(terminalZ));
+	vect.setUnsafe(cartesian,terminalX,vect.get(terminalX)/norm*step,terminalY,vect.get(terminalY)/norm*step,terminalZ,vect.get(terminalZ)/norm*step);
 
 	_trajectory.clear();
 	_trajectory.push_back(stA);
 
 	for(double i=0;i<norm;i+=step) {
-		stA.terminalX+=vect.terminalX;
-		stA.terminalY+=vect.terminalY;
-		stA.terminalZ+=vect.terminalZ;
+		stA.set(cartesian,terminalX,stA.get(terminalX)+vect.get(terminalX),terminalY,stA.get(terminalY)+vect.get(terminalY),terminalZ,stA.get(terminalZ)+vect.get(terminalZ));
 		_trajectory.push_back(stA);
 	}
 
@@ -63,20 +54,14 @@ void BotTrajectories::genTrajectory(Position a,Position b,Trajectory& _trajector
 }
 
 void BotTrajectories::initStartUpRoutine(Trajectory& _trajectory,TrajIt& _trajIt,BotState& _state) {
-	BotState start;
-	start.theta0=90;
-	start.alpha1=180;
-	start.alpha2=-170;
-	start.alpha3=0;
-	start.theta3=90;
+	BotState start,end;
+	#define c(a,x) conv(a,true,x*M_PI/180)
+	start.setUnsafe(angles,theta0,c(0,90),alpha1,c(1,180),alpha2,c(2,-170),alpha3,c(3,0),theta3,c(4,90));
+	end.setUnsafe(angles,theta0,c(0,90),alpha1,c(1,140),alpha2,c(2,-107),alpha3,c(3,0),theta3,c(4,0));
 
-	BotState end;
-	end.theta0=90;
-	end.alpha1=140;
-	end.alpha2=-107;
-	end.alpha3=0;
-	end.theta3=0;
-	end.alpha3=_terminalAbsAlpha-end.alpha1-end.alpha2;
+	double v_al1=conv(1,false,end.get(alpha1));
+	double v_al2=conv(2,false,end.get(alpha2));
+	end.setUnsafe(angles,alpha3,conv(3,true,_terminalAbsAlpha-v_al1-v_al2));
 
 	BotState current=start;
 
@@ -85,28 +70,42 @@ void BotTrajectories::initStartUpRoutine(Trajectory& _trajectory,TrajIt& _trajIt
 
 	//Compute
 	bool finished=false;
-	double halfElbo=end.alpha2+((start.alpha2-end.alpha2)/2);
+	double halfElbo=end.get(alpha2)+((start.get(alpha2)-end.get(alpha2))/2);
 
 	while(!finished) {
-		if((current.alpha2<halfElbo)) {
-			current.alpha2++;
+		if((current.get(alpha2)<halfElbo)) {
+			double v=conv(2,false,current.get(alpha2))*180/M_PI;
+			v++;
+			current.setUnsafe(angles,alpha2,conv(2,true,v*M_PI/180));
 			_trajectory.push_back(current);
 		}
-		else if(current.theta3>end.theta3) {
-			current.theta3-=3;
+		else if(current.get(theta3)>end.get(theta3)) {
+			double v=conv(4,false,current.get(theta3))*180/M_PI;
+			v-=3;
+			current.setUnsafe(angles,theta3,conv(4,true,v*M_PI/180));
 			_trajectory.push_back(current);
 		}
-		else if(current.alpha3>end.alpha3) {
-			current.alpha3-=3;
+		else if(current.get(alpha3)>end.get(alpha3)) {
+			double v=conv(3,false,current.get(alpha3))*180/M_PI;
+			v-=3;
+			current.setUnsafe(angles,alpha3,conv(3,true,v*M_PI/180));
 			_trajectory.push_back(current);
 		}
 		else {
-			if((current.alpha2<end.alpha2)) current.alpha2++;
-			if((current.alpha1>end.alpha1)) current.alpha1--;
+			if((current.get(alpha2)<end.get(alpha2))) {
+				double v=conv(2,false,current.get(alpha2))*180/M_PI;
+				v++;
+				current.setUnsafe(angles,alpha2,conv(2,true,v*M_PI/180));
+			}
+			if((current.get(alpha1)>end.get(alpha1))) {
+				double v=conv(1,false,current.get(alpha1))*180/M_PI;
+				v--;
+				current.setUnsafe(angles,alpha1,conv(1,true,v*M_PI/180));
+			}
 			_trajectory.push_back(current);
 		}
 
-		if(current.theta0==end.theta0 && current.alpha1==end.alpha1 && current.alpha2==end.alpha2 && current.theta3==end.theta3) finished=true;
+		if(near(current.get(theta0),end.get(theta0)) && near(current.get(alpha1),end.get(alpha1)) && near(current.get(alpha2),end.get(alpha2)) && near(current.get(theta3),end.get(theta3))) finished=true;
 
 	}
 
@@ -117,9 +116,9 @@ void BotTrajectories::initStartUpRoutine(Trajectory& _trajectory,TrajIt& _trajIt
 void BotTrajectories::initPreShutDownRoutine(Trajectory& _trajectory,TrajIt& _trajIt,BotState& _state) {
 
 	Position start,end;
-	start.x=_state.terminalX;
-	start.y=_state.terminalY;
-	start.z=_state.terminalZ;
+	start.x=_state.get(terminalX);
+	start.y=_state.get(terminalY);
+	start.z=_state.get(terminalZ);
 	end.x=0;
 	end.y=35;
 	end.z=22;
@@ -129,25 +128,15 @@ void BotTrajectories::initPreShutDownRoutine(Trajectory& _trajectory,TrajIt& _tr
 
 void BotTrajectories::initShutDownRoutine(Trajectory& _trajectory,TrajIt& _trajIt,BotState& _state) {
 
-	_state.terminalX=0;
-	_state.terminalY=35;
-	_state.terminalZ=22;
+	_state.set(cartesian,terminalX,0,terminalY,35,terminalZ,22);
+	BotState start,end;
+	#define c(a,x) conv(a,true,x*M_PI/180)
+	start.setUnsafe(angles,theta0,c(0,90),alpha1,c(1,140),alpha2,c(2,-107),alpha3,c(3,0),theta3,c(4,0));
+	end.setUnsafe(angles,theta0,c(0,90),alpha1,c(1,180),alpha2,c(2,-170),alpha3,c(3,0),theta3,c(4,90));
 
-	BotState start;
-	start.theta0=90;
-	start.alpha1=140;
-	start.alpha2=-107;
-	start.alpha3=0;
-	start.theta3=0;
-
-	BotState end;
-	end.theta0=90;
-	end.alpha1=180;
-	end.alpha2=-170;
-	end.alpha3=0;
-	end.theta3=90;
-	
-	start.alpha3=_terminalAbsAlpha-start.alpha1-start.alpha2;
+	double v_al1=conv(1,false,start.get(alpha1));
+	double v_al2=conv(2,false,start.get(alpha2));
+	start.setUnsafe(angles,alpha3,conv(3,true,_terminalAbsAlpha-v_al1-v_al2));
 
 	BotState current=start;
 
@@ -156,32 +145,48 @@ void BotTrajectories::initShutDownRoutine(Trajectory& _trajectory,TrajIt& _trajI
 
 	//Compute
 	bool finished=false;
-	double halfElbo=start.alpha2+((end.alpha2-start.alpha2)/2);
+	double halfElbo=start.get(alpha2)+((end.get(alpha2)-start.get(alpha2))/2);
 
 	while(!finished) {
-		if(current.alpha1<end.alpha1) {
-			current.alpha1++;
+		if(current.get(alpha1)<end.get(alpha1)) {
+			double v=conv(1,false,current.get(alpha1))*180/M_PI;
+			v++;
+			current.setUnsafe(angles,alpha1,conv(1,true,v*M_PI/180));
 			_trajectory.push_back(current);
 		}
-		else if((current.alpha2>halfElbo)) {
-			current.alpha2--;
+		else if((current.get(alpha2)>halfElbo)) {
+			double v=conv(2,false,current.get(alpha2))*180/M_PI;
+			v--;
+			current.setUnsafe(angles,alpha2,conv(2,true,v*M_PI/180));
 			_trajectory.push_back(current);
 		}
-		else if(current.theta3<end.theta3) {
-			current.theta3+=3;
+		else if(current.get(theta3)<end.get(theta3)) {
+			double v=conv(4,false,current.get(theta3))*180/M_PI;
+			v+=3;
+			current.setUnsafe(angles,theta3,conv(4,true,v*M_PI/180));
 			_trajectory.push_back(current);
 		}
-		else if(current.alpha3<end.alpha3) {
-			current.alpha3+=3;
+		else if(current.get(alpha3)<end.get(alpha3)) {
+			double v=conv(3,false,current.get(alpha3))*180/M_PI;
+			v+=3;
+			current.setUnsafe(angles,alpha3,conv(3,true,v*M_PI/180));
 			_trajectory.push_back(current);
 		}
 		else {
-			if((current.alpha2>end.alpha2)) current.alpha2--;
-			if((current.alpha1<end.alpha1)) current.alpha1++;
+			if((current.get(alpha2)>end.get(alpha2))) {
+				double v=conv(2,false,current.get(alpha2))*180/M_PI;
+				v--;
+				current.setUnsafe(angles,alpha2,conv(2,true,v*M_PI/180));
+			}
+			if((current.get(alpha1)<end.get(alpha1))) {
+				double v=conv(1,false,current.get(alpha1))*180/M_PI;
+				v++;
+				current.setUnsafe(angles,alpha1,conv(1,true,v*M_PI/180));
+			}
 			_trajectory.push_back(current);
 		}
 
-		if(current.theta0==end.theta0 && current.alpha1==end.alpha1 && current.alpha2==end.alpha2 && current.theta3==end.theta3) finished=true;
+		if(near(current.get(theta0),end.get(theta0)) && near(current.get(alpha1),end.get(alpha1)) && near(current.get(alpha2),end.get(alpha2)) && near(current.get(theta3),end.get(theta3))) finished=true;
 
 	}
 
@@ -190,72 +195,21 @@ void BotTrajectories::initShutDownRoutine(Trajectory& _trajectory,TrajIt& _trajI
 }
 
 bool BotTrajectories::loopStartUpRoutine(BotState& _state,Trajectory& _trajectory,TrajIt& _trajIt) {
-	_state.theta0=conv(0,true,(*_trajIt).theta0*M_PI/180);
-	_state.alpha1=conv(1,true,(*_trajIt).alpha1*M_PI/180);
-	_state.alpha2=conv(2,true,(*_trajIt).alpha2*M_PI/180);
-	_state.alpha3=conv(3,true,(*_trajIt).alpha3*M_PI/180);
-	_state.theta3=conv(4,true,(*_trajIt).theta3*M_PI/180);
-	_state.length3Al=_length3*cos((*_trajIt).theta3*M_PI/180);
-	_state.wristX=_length1*cos((*_trajIt).alpha1*M_PI/180)+_length2*cos((*_trajIt).alpha1*M_PI/180+((*_trajIt).alpha2*M_PI/180));
-	_state.wristY=99;
 	if(_trajIt==_trajectory.end()) return false;
+	_state.setFrom(*_trajIt);
 	return true;
 }
 
 bool BotTrajectories::loopPreShutDownRoutine(BotState& _state,Trajectory& _trajectory,TrajIt& _trajIt) {
 	if(_trajIt==_trajectory.end()) return false;
 	else {
-		copyState(_state,*_trajIt);
-		_state=computeAngles(_state);
+		_state.setFrom(*_trajIt);
 		return true;
 	}
 }
 
 bool BotTrajectories::loopShutDownRoutine(BotState& _state,Trajectory& _trajectory,TrajIt& _trajIt) {
-	_state.theta0=conv(0,true,(*_trajIt).theta0*M_PI/180);
-	_state.alpha1=conv(1,true,(*_trajIt).alpha1*M_PI/180);
-	_state.alpha2=conv(2,true,(*_trajIt).alpha2*M_PI/180);
-	_state.alpha3=conv(3,true,(*_trajIt).alpha3*M_PI/180);
-	_state.theta3=conv(4,true,(*_trajIt).theta3*M_PI/180);
-	_state.length3Al=_length3*cos((*_trajIt).theta3*M_PI/180);
-	_state.wristX=_length1*cos((*_trajIt).alpha1*M_PI/180)+_length2*cos((*_trajIt).alpha1*M_PI/180+((*_trajIt).alpha2*M_PI/180));
-	_state.wristY=99;
 	if(_trajIt==_trajectory.end()) return false;
+	_state.setFrom(*_trajIt);
 	return true;
-}
-
-BotState BotTrajectories::computeAngles(BotState state) {
-	//Angles computing :
-	state.theta0=atan2((state.terminalZ-_length3*cos(_terminalAbsAlpha)*cos(_terminalAbsTheta)),(state.terminalX+_length3*cos(_terminalAbsAlpha)*sin(_terminalAbsTheta)));
-	state.theta3=M_PI/2-_terminalAbsTheta-state.theta0;
-	state.length3Al=_length3*cos(state.theta3);
-	state.wristX=(state.terminalX+_length3*cos(_terminalAbsAlpha)*sin(_terminalAbsTheta))/cos(state.theta0);
-	state.wristY=state.terminalY-_length3*sin(_terminalAbsAlpha);
-	state.terminalXTh=state.wristX+state.length3Al*cos(_terminalAbsAlpha);
-
-	//cf 379.pdf :
-	double cosAlpha2=(state.wristX*state.wristX+state.wristY*state.wristY-_length1*_length1-_length2*_length2)/(2*_length1*_length2);
-	double sinAlpha2=-sqrt(1-cosAlpha2*cosAlpha2);
-	double cosAlpha1=(state.wristX*(_length1+_length2*cosAlpha2)+state.wristY*_length2*sinAlpha2)/(state.wristX*state.wristX+state.wristY*state.wristY);
-	double sinAlpha1=sqrt(1-cosAlpha1*cosAlpha1);
-	state.alpha1=atan2(sinAlpha1,cosAlpha1);
-	state.alpha2=atan2(sinAlpha2,cosAlpha2);
-	state.alpha3=_terminalAbsAlpha-state.alpha1-state.alpha2;
-
-	logs["Computed1"].reset() << "Computed angles ## ";
-	logs["Computed2"].reset() << "Theta 0 : " << state.theta0*180/M_PI;
-	logs["Computed3"].reset() << "Alpha 1 : " << state.alpha1*180/M_PI;
-	logs["Computed4"].reset() << "Alpha 2 : " << state.alpha2*180/M_PI;
-	logs["Computed5"].reset() << "Alpha 3 : " << state.alpha3*180/M_PI;
-	logs["Computed6"].reset() << "Theta 3 : " << state.theta3*180/M_PI;
-	logs.refresh();
-
-	//Conversion : computed->real
-	state.theta0=conv(0,true,state.theta0);
-	state.alpha1=conv(1,true,state.alpha1);
-	state.alpha2=conv(2,true,state.alpha2);
-	state.alpha3=conv(3,true,state.alpha3);
-	state.theta3=conv(4,true,state.theta3);
-
-	return state;
 }

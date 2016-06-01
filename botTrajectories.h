@@ -30,7 +30,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef BOT_TRAJECTORIES_H
 #define BOT_TRAJECTORIES_H
 
+#include <iostream>
 #include "common.h"
+#include "botState.h"
 
 class BotTrajectories {
 public:
