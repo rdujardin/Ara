@@ -34,9 +34,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 
 #include "common.h"
-#include "ballDetector.h"
-#include "botController.h"
+#include "../vision/ballDetector.h"
+#include "../bot/botController.h"
 #include "logWindow.h"
+
+#define KEY_ESCAPE 27
+#define KEY_SPACE 32
+
+#define EVENT_CONTINUE 0
+#define EVENT_EXIT 1
 
 class Application {
 	public:
@@ -45,10 +51,11 @@ class Application {
 
 	private:
 		void setMode(Mode mode);
-		bool testNextMode();
-		bool shutdown();
+
+		int checkKeyboard();
 
 		Mode _mode,_optMode;
+		bool _pause;
 
 		Camera* _cam;
 		BallDetector* _ballDetector;

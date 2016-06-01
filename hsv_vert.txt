@@ -1,4 +1,0 @@
-balle polyst verte
-H 37 84
-S 52 255
-V 96 255

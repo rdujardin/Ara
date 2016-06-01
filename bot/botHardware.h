@@ -1,5 +1,5 @@
 /*
-detectors.h (part of Ara, https://github.com/rdujardin/Ara)
+botHardware.h (part of Ara, https://github.com/rdujardin/Ara)
 
 Copyright (c) 2016, Raphaël Dujardin (rdujardin) & Jean Boehm (jboehm1)
 All rights reserved.
@@ -27,48 +27,28 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef DETECTORS_H
-#define DETECTORS_H
+#include <wiringPi.h>
+#include <wiringSerial.h>
+#include <iostream>
+#include "../common/common.h"
+#include "botState.h"
 
-#include <opencv2/opencv.hpp>
+#ifndef BOT_HARDWARE_H
+#define BOT_HARDWARE_H
 
-#include "common.h"
-#include "timer.h"
-#include "adjustable.h"
-
-struct Detection {
-	cv::RotatedRect ellipseRect;
-	int x,y,radius;
-	bool valid;
-};
-
-typedef std::vector<Detection> DetectionList;
-
-void drawDetections(cv::Mat& dst,DetectionList& detect,bool ellipses);
-
-//------------------------------------------------------------------------------
-
-class EllipseFitter : public Timable {
+class BotHardware {
 public:
-	EllipseFitter(Timer& timer);
-
-	void apply(cv::Mat& img,DetectionList& out);
-	void apply(cv::Mat& img,cv::Mat& dst,DetectionList& out);
-	void operator()(cv::Mat& img,DetectionList& out);
-	void operator()(cv::Mat& img,cv::Mat& dst,DetectionList& out);
+	BotHardware(bool withBot);
+	void sendToMotors(BotState& state);
+	void sendToVehicle(int vehicleLeftSpeed,int vehicleRightSpeed);
+	void checkBatteryLevel();
+	int batteryLevel();
 private:
-	
-};
-
-//------------------------------------------------------------------------------
-
-class MomentsCalculator : public Timable {
-public:
-	MomentsCalculator(Timer& timer);
-
-	void apply(cv::Mat& img,cv::Mat& drawOut,DetectionList& out);
-	void operator()(cv::Mat& img,cv::Mat& drawOut,DetectionList& out);
+	bool _withBot;
+	int _fd;
+	void sendInt(int v);
+	void sendAngle(double angle);
+	int _batteryLevel;
 };
 
 #endif
-

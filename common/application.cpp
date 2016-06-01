@@ -33,6 +33,7 @@ using namespace std;
 using namespace cv;
 
 Application::Application(int argc,char* argv[]) {
+	_pause=false;
 	readArgs(argc,argv);
 	_cam=new Camera(true,_optCamId);
 	if (!_cam->isOpened()) throw -1;
@@ -43,44 +44,38 @@ Application::Application(int argc,char* argv[]) {
 	_botController->setMode(_mode);
 
 	while(true) {
-		if(_mode==STARTUP) {
-			if(!_botController->loopRoutine()) setMode(_optMode);
-			waitKey(1);
-		}
-		else if(_mode==FOLLOW) {
-			Position pos;
-			_ballDetector->loop(pos);
-			adaptPosition(pos);
-			if(!_botController->follow(pos)) {
-				if(!shutdown()) break;
+		int event=checkKeyboard();
+		if(!_pause) {
+			if(_mode==STARTUP) {
+				if(!_botController->loopRoutine()) setMode(_optMode);
 			}
+			else if(_mode==FOLLOW) {
+				Position pos;
+				_ballDetector->loop(pos);
+				adaptPosition(pos);
+				_botController->follow(pos);
 
-			if(!testNextMode()) break;
-		}
-		else if(_mode==GATHER) {
-			Position pos;
-			_ballDetector->loop(pos);
-			adaptPosition(pos);
-			if(!_botController->loopGather(pos)) {
-				if(!shutdown()) break;
+				if(event==EVENT_EXIT) break;
 			}
-			
-			if(!testNextMode()) break;
-		}
-		else if(_mode==MANUAL) {
-			if(!_botController->loopManual()) {
-				if(!shutdown()) break;
+			else if(_mode==GATHER) {
+				Position pos;
+				_ballDetector->loop(pos);
+				adaptPosition(pos);
+				_botController->loopGather(pos);
+				
+				if(event==EVENT_EXIT) break;
 			}
+			else if(_mode==MANUAL) {
+				_botController->loopManual();
 
-			if(!testNextMode()) break;
-		}
-		else if(_mode==PRESHUTDOWN) {
-			if(!_botController->loopRoutine()) setMode(SHUTDOWN);
-			waitKey(1);
-		}
-		else { //SHUTDOWN
-			if(!_botController->loopRoutine()) break;
-			waitKey(1);
+				if(event==EVENT_EXIT) break;
+			}
+			else if(_mode==PRESHUTDOWN) {
+				if(!_botController->loopRoutine()) setMode(SHUTDOWN);
+			}
+			else { //SHUTDOWN
+				if(!_botController->loopRoutine()) break;
+			}
 		}
 		logs.processRepainting();
 	}
@@ -91,6 +86,27 @@ Application::~Application() {
 	delete _botController;
 	delete _ballDetector;
 	delete _cam;
+}
+
+int Application::checkKeyboard() {
+	int key=waitKey(1);
+	if(key==KEY_SPACE) {
+		_pause=!_pause;
+		return EVENT_CONTINUE;
+	}
+	else {
+		if(_mode==STARTUP || _mode==PRESHUTDOWN || _mode==SHUTDOWN) return EVENT_CONTINUE; 
+		else if(_mode==FOLLOW || _mode==GATHER || _mode==MANUAL) {
+			if(key==KEY_ESCAPE) {
+				if(_optWithBot || _optForceWithRoutines) {
+					setMode(PRESHUTDOWN);
+					return EVENT_CONTINUE;
+				}
+				else return EVENT_EXIT;
+			}
+			else return EVENT_CONTINUE;
+		}
+	}
 }
 
 void Application::adaptPosition(Position& pos) {
@@ -109,20 +125,6 @@ void Application::adaptOrientation(Position& pos) {
 void Application::setMode(Mode mode) {
 	_mode=mode;
 	_botController->setMode(mode);
-}
-
-bool Application::testNextMode() {
-	char key=waitKey(1);
-	if(key==27) return shutdown();
-	return true;
-}
-
-bool Application::shutdown() {
-	if(_optWithBot || _optForceWithRoutines) {
-		setMode(PRESHUTDOWN);
-		return true;
-	}
-	else return false;
 }
 
 void Application::initWindows() {

@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <opencv2/opencv.hpp>
 #include <cmath>
 #include <sstream>
-#include "common.h"
+#include "../common/common.h"
 #include "botState.h"
 
 class BotDraw {

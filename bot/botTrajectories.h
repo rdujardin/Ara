@@ -1,5 +1,5 @@
 /*
-botHardware.h (part of Ara, https://github.com/rdujardin/Ara)
+botTrajectories.h (part of Ara, https://github.com/rdujardin/Ara)
 
 Copyright (c) 2016, Raphaël Dujardin (rdujardin) & Jean Boehm (jboehm1)
 All rights reserved.
@@ -27,28 +27,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include <wiringPi.h>
-#include <wiringSerial.h>
+#ifndef BOT_TRAJECTORIES_H
+#define BOT_TRAJECTORIES_H
+
 #include <iostream>
-#include "common.h"
+#include "../common/common.h"
 #include "botState.h"
 
-#ifndef BOT_HARDWARE_H
-#define BOT_HARDWARE_H
-
-class BotHardware {
+class BotTrajectories {
 public:
-	BotHardware(bool withBot);
-	void sendToMotors(BotState& state);
-	void sendToVehicle(int vehicleLeftSpeed,int vehicleRightSpeed);
-	void checkBatteryLevel();
-	int batteryLevel();
-private:
-	bool _withBot;
-	int _fd;
-	void sendInt(int v);
-	void sendAngle(double angle);
-	int _batteryLevel;
+	static void genTrajectory(Position a,Position b,Trajectory& _trajectory,TrajIt& _trajIt,double step=0.3);
+	static BotState computeAngles(BotState state);
+
+	static void initStartUpRoutine(Trajectory& _trajectory,TrajIt& _trajIt,BotState& _state);
+	static void initPreShutDownRoutine(Trajectory& _trajectory,TrajIt& _trajIt,BotState& _state);
+	static void initShutDownRoutine(Trajectory& _trajectory,TrajIt& _trajIt,BotState& _state);
+	static bool loopStartUpRoutine(BotState& _state,Trajectory& _trajectory,TrajIt& _trajIt);
+	static bool loopPreShutDownRoutine(BotState& _state,Trajectory& _trajectory,TrajIt& _trajIt);
+	static bool loopShutDownRoutine(BotState& _state,Trajectory& _trajectory,TrajIt& _trajIt);
 };
 
 #endif

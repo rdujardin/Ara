@@ -1,5 +1,5 @@
 /*
-botTrajectories.h (part of Ara, https://github.com/rdujardin/Ara)
+botController.h (part of Ara, https://github.com/rdujardin/Ara)
 
 Copyright (c) 2016, Raphaël Dujardin (rdujardin) & Jean Boehm (jboehm1)
 All rights reserved.
@@ -27,24 +27,54 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef BOT_TRAJECTORIES_H
-#define BOT_TRAJECTORIES_H
+#ifndef BOT_CONTROLLER_H
+#define BOT_CONTROLLER_H
 
+#include <opencv2/opencv.hpp>
+#include <cmath>
+#include <sstream>
 #include <iostream>
-#include "common.h"
+
+#include "../common/common.h"
+#include "../common/adjustable.h"
+#include "../common/timer.h"
 #include "botState.h"
+#include "botHardware.h"
+#include "botDraw.h"
+#include "botTrajectories.h"
 
-class BotTrajectories {
-public:
-	static void genTrajectory(Position a,Position b,Trajectory& _trajectory,TrajIt& _trajIt,double step=0.3);
-	static BotState computeAngles(BotState state);
+class BotController : public Adjustable {
+	public:
+		BotController(bool withBot);
+		~BotController();
 
-	static void initStartUpRoutine(Trajectory& _trajectory,TrajIt& _trajIt,BotState& _state);
-	static void initPreShutDownRoutine(Trajectory& _trajectory,TrajIt& _trajIt,BotState& _state);
-	static void initShutDownRoutine(Trajectory& _trajectory,TrajIt& _trajIt,BotState& _state);
-	static bool loopStartUpRoutine(BotState& _state,Trajectory& _trajectory,TrajIt& _trajIt);
-	static bool loopPreShutDownRoutine(BotState& _state,Trajectory& _trajectory,TrajIt& _trajIt);
-	static bool loopShutDownRoutine(BotState& _state,Trajectory& _trajectory,TrajIt& _trajIt);
+		void setMode(Mode mode);
+
+		bool follow(Position detection);
+		bool loopGather(Position detection);
+		bool loopManual();
+		bool loopRoutine();
+
+		void nextState();
+		
+		virtual void adjusted(std::string name,int val);
+	//private:
+		bool _withBot;
+		Mode _mode;
+
+		BotHardware* _hardware;
+
+		BotState _state;
+		int _vehicleLeftSpeed, _vehicleRightSpeed;
+
+		Trajectory _trajectory;
+		TrajIt _trajIt;
+		
+		BotState computeAngles(BotState state);
+
+		bool loopAngles(bool unsafe=false);
+		
 };
 
 #endif
+

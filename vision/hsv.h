@@ -1,5 +1,5 @@
 /*
-hough.h (part of Ara, https://github.com/rdujardin/Ara)
+hsv.h (part of Ara, https://github.com/rdujardin/Ara)
 
 Copyright (c) 2016, Raphaël Dujardin (rdujardin) & Jean Boehm (jboehm1)
 All rights reserved.
@@ -27,25 +27,33 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef HOUGH_H
-#define HOUGH_H
+#ifndef HSV_H
+#define HSV_H
 
 #include <opencv2/opencv.hpp>
-#include <vector>
 
-#include "timer.h"
+#include "../common/timer.h"
+#include "camera.h"
 
-class Hough : public Timable {
+#define HSV_RANGE_EXTEND 10
+#define HSV_AUTOSET_RADIUS 30
+
+class HSV_Thresholder : public Timable, public Adjustable {
 public:
-	Hough(Timer& timer, std::vector<cv::Vec3f>& circles);
+	HSV_Thresholder(Timer& timer, bool adjustable);
 
 	void apply(cv::Mat& src, cv::Mat& dst);
-
 	void operator()(cv::Mat& src, cv::Mat& dst);
-private:
-	std::vector<cv::Vec3f>& _circles;
-
-	void draw(cv::Mat& dst);
+	
+	void autoSet(cv::Mat& img,std::string ball);
+	
+	//static const unsigned int autoSetRadius=100; // si changé, changer ballDetector.cpp:118 et hsv.cpp:49
+	
+private:	
+	virtual void adjusted(std::string name,int val);
+	
+	void createUi();
+	
 };
 
 #endif

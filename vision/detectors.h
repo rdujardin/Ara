@@ -1,5 +1,5 @@
 /*
-hsv.h (part of Ara, https://github.com/rdujardin/Ara)
+detectors.h (part of Ara, https://github.com/rdujardin/Ara)
 
 Copyright (c) 2016, Raphaël Dujardin (rdujardin) & Jean Boehm (jboehm1)
 All rights reserved.
@@ -27,33 +27,47 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef HSV_H
-#define HSV_H
+#ifndef DETECTORS_H
+#define DETECTORS_H
 
 #include <opencv2/opencv.hpp>
 
-#include "timer.h"
-#include "camera.h"
+#include "../common/common.h"
+#include "../common/timer.h"
+#include "../common/adjustable.h"
 
-#define HSV_RANGE_EXTEND 10
-#define HSV_AUTOSET_RADIUS 30
+struct Detection {
+	cv::RotatedRect ellipseRect;
+	int x,y,radius;
+	bool valid;
+};
 
-class HSV_Thresholder : public Timable, public Adjustable {
+typedef std::vector<Detection> DetectionList;
+
+void drawDetections(cv::Mat& dst,DetectionList& detect,bool ellipses);
+
+//------------------------------------------------------------------------------
+
+class EllipseFitter : public Timable {
 public:
-	HSV_Thresholder(Timer& timer, bool adjustable);
+	EllipseFitter(Timer& timer);
 
-	void apply(cv::Mat& src, cv::Mat& dst);
-	void operator()(cv::Mat& src, cv::Mat& dst);
+	void apply(cv::Mat& img,DetectionList& out);
+	void apply(cv::Mat& img,cv::Mat& dst,DetectionList& out);
+	void operator()(cv::Mat& img,DetectionList& out);
+	void operator()(cv::Mat& img,cv::Mat& dst,DetectionList& out);
+private:
 	
-	void autoSet(cv::Mat& img,std::string ball);
-	
-	//static const unsigned int autoSetRadius=100; // si changé, changer ballDetector.cpp:118 et hsv.cpp:49
-	
-private:	
-	virtual void adjusted(std::string name,int val);
-	
-	void createUi();
-	
+};
+
+//------------------------------------------------------------------------------
+
+class MomentsCalculator : public Timable {
+public:
+	MomentsCalculator(Timer& timer);
+
+	void apply(cv::Mat& img,cv::Mat& drawOut,DetectionList& out);
+	void operator()(cv::Mat& img,cv::Mat& drawOut,DetectionList& out);
 };
 
 #endif

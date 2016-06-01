@@ -85,7 +85,11 @@ bool BotController::follow(Position detection) {
 }
 
 bool BotController::loopGather(Position detection) {
-	//TODO
+	Position current;
+	current.x=_state.get(terminalX);
+	current.y=_state.get(terminalY);
+	current.z=_state.get(terminalZ);
+	BotTrajectories::genTrajectory(current,detection,_trajectory,_trajIt); //Kalpha, offset? , exécution, retour
 	return true;
 }
 
@@ -114,8 +118,6 @@ bool BotController::loopAngles(bool unsafe) {
 	
 	//Draw bot
 	BotDraw::drawBot(draw1,draw2,_state,workZoneCheck || unsafe);
-
-	cout << "." << endl;
 	
 	imshow("Bras (vue de cote)",draw1);
 	imshow("Bras (vue de haut)",draw2);

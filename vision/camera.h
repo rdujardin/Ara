@@ -1,5 +1,5 @@
 /*
-filters.h (part of Ara, https://github.com/rdujardin/Ara)
+camera.h (part of Ara, https://github.com/rdujardin/Ara)
 
 Copyright (c) 2016, Raphaël Dujardin (rdujardin) & Jean Boehm (jboehm1)
 All rights reserved.
@@ -27,43 +27,35 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef FILTERS_H
-#define FILTERS_H
+#ifndef CAMERA_H
+#define CAMERA_H
 
 #include <opencv2/opencv.hpp>
+#include <sstream>
+#include <iostream>
 
-#include "timer.h"
-#include "adjustable.h"
+#include "../common/adjustable.h"
 
-//------------------------------------------------------------------------------
+class Camera : public cv::VideoCapture, public Adjustable {
+	public:
+		Camera(bool adjustable,unsigned int camId);
+		
+		static const unsigned int width=1280;
+		static const unsigned int height=960;
+		static const unsigned int framerate=30;
+		
+		static constexpr double focal=0.0039;
+		static constexpr double pixelSize=0.0000028;
+		
+	private:
+		int v4l(std::string args);
+		int updateV4l(std::string name);
+		int updateV4lAll();
 
-class GaussianFilter : public Timable, public Adjustable {
-public:
-	GaussianFilter(Timer& timer, bool adjustable);
-
-	void apply(cv::Mat& img);
-	void operator()(cv::Mat& img);
-private:
-	virtual void adjusted(std::string name,int val);
-};
-
-//------------------------------------------------------------------------------
-
-class DilateEroder : public Timable, public Adjustable {
-public:
-	DilateEroder(Timer& timer, bool adjustable);
-	~DilateEroder();
-
-	void apply(cv::Mat& img);
-	void operator()(cv::Mat& img);
-private:
-	//cv::Mat* _dilateStructure;
-	//cv::Mat* _erodeStructure;
+		unsigned int _camId;
 	
-	virtual void adjusted(std::string name,int val);
+		virtual void adjusted(std::string name,int val);
 };
-
-//------------------------------------------------------------------------------
 
 #endif
 

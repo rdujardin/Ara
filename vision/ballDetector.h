@@ -39,14 +39,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 #include <fstream>
 
-#include "common.h"
-#include "timer.h"
+#include "../common/common.h"
+#include "../common/timer.h"
 #include "hsv.h"
 #include "filters.h"
 #include "hough.h"
 #include "camera.h"
 #include "detectors.h"
-#include "logWindow.h"
+#include "../common/logWindow.h"
 
 enum State {
 	BD_PLACE_BALL=1,

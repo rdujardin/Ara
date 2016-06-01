@@ -1,0 +1,3 @@
+ARA
+This directory "obj" is used during the build to store the object (.o) files.
+Its content can be removed, but don't remove this directory, build would fail.

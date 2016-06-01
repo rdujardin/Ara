@@ -1,5 +1,5 @@
 /*
-botController.h (part of Ara, https://github.com/rdujardin/Ara)
+hough.h (part of Ara, https://github.com/rdujardin/Ara)
 
 Copyright (c) 2016, Raphaël Dujardin (rdujardin) & Jean Boehm (jboehm1)
 All rights reserved.
@@ -27,53 +27,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef BOT_CONTROLLER_H
-#define BOT_CONTROLLER_H
+#ifndef HOUGH_H
+#define HOUGH_H
 
 #include <opencv2/opencv.hpp>
-#include <cmath>
-#include <sstream>
-#include <iostream>
+#include <vector>
 
-#include "common.h"
-#include "adjustable.h"
-#include "timer.h"
-#include "botState.h"
-#include "botHardware.h"
-#include "botDraw.h"
-#include "botTrajectories.h"
+#include "../common/timer.h"
 
-class BotController : public Adjustable {
-	public:
-		BotController(bool withBot);
-		~BotController();
+class Hough : public Timable {
+public:
+	Hough(Timer& timer, std::vector<cv::Vec3f>& circles);
 
-		void setMode(Mode mode);
+	void apply(cv::Mat& src, cv::Mat& dst);
 
-		bool follow(Position detection);
-		bool loopGather(Position detection);
-		bool loopManual();
-		bool loopRoutine();
+	void operator()(cv::Mat& src, cv::Mat& dst);
+private:
+	std::vector<cv::Vec3f>& _circles;
 
-		void nextState();
-		
-		virtual void adjusted(std::string name,int val);
-	//private:
-		bool _withBot;
-		Mode _mode;
-
-		BotHardware* _hardware;
-
-		BotState _state;
-		int _vehicleLeftSpeed, _vehicleRightSpeed;
-
-		Trajectory _trajectory;
-		TrajIt _trajIt;
-		
-		BotState computeAngles(BotState state);
-
-		bool loopAngles(bool unsafe=false);
-		
+	void draw(cv::Mat& dst);
 };
 
 #endif
