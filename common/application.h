@@ -38,8 +38,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../bot/botController.h"
 #include "logWindow.h"
 
-#define KEY_ESCAPE 27
-#define KEY_SPACE 32
+#define KEY_ESCAPE 1048603 //27
+#define KEY_SPACE 1048608// 32
+#define KEY_BACKSPACE 1113864 // 8
+#define KEY_ENTER 1048586 //13
 
 #define EVENT_CONTINUE 0
 #define EVENT_EXIT 1
@@ -50,12 +52,13 @@ class Application {
 		~Application();
 
 	private:
-		void setMode(Mode mode);
+		void setMode(Mode mode,Mode next=NULL_MODE);
 
 		int checkKeyboard();
 
-		Mode _mode,_optMode;
+		Mode _mode,_nextMode,_optMode;
 		bool _pause;
+		bool _gatherGo;
 
 		Camera* _cam;
 		BallDetector* _ballDetector;

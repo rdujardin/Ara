@@ -38,6 +38,7 @@ BotController::BotController(bool withBot) : Adjustable("Bras (vue de cote)") {
 	_hardware=new BotHardware(withBot);
 
 	_state.set(cartesian,terminalX,0,terminalY,35,terminalZ,22);
+	_memState.set(cartesian,terminalX,0,terminalY,35,terminalZ,22);
 
 	_vehicleLeftSpeed=0;
 	_vehicleRightSpeed=0;
@@ -72,7 +73,7 @@ bool BotController::loopRoutine() {
 	else if(_mode==SHUTDOWN) ret=BotTrajectories::loopShutDownRoutine(_state,_trajectory,_trajIt);
 	loopAngles(true);
 	_trajIt++;
-	Timer::wait(20);
+	Timer::wait(40);
 	return ret;
 }
 
@@ -84,13 +85,44 @@ bool BotController::follow(Position detection) {
 
 }
 
-bool BotController::loopGather(Position detection) {
+bool BotController::gather(Position detection) {
 	Position current;
 	current.x=_state.get(terminalX);
 	current.y=_state.get(terminalY);
 	current.z=_state.get(terminalZ);
-	BotTrajectories::genTrajectory(current,detection,_trajectory,_trajIt); //Kalpha, offset? , exécution, retour
-	return true;
+	_memState.setFrom(_state);
+	BotTrajectories::genTrajectory(current,detection,_trajectory,_trajIt); //Kalpha ? offset ?
+	Timer::wait(100);
+	return false;
+}
+
+bool BotController::trajectory() {
+	if(_trajIt==_trajectory.end()) return false;
+	else {
+		_state.setFrom(*_trajIt);
+		loopAngles();
+		_trajIt++;
+		Timer::wait(20);
+		return true;
+	}
+}
+
+bool BotController::gatherGrab() {
+	Timer::wait(200);
+	return false;
+}
+
+bool BotController::gatherBack() {
+	Position current;
+	current.x=_state.get(terminalX);
+	current.y=_state.get(terminalY);
+	current.z=_state.get(terminalZ);
+	Position back;
+	back.x=_memState.get(terminalX);
+	back.y=_memState.get(terminalY);
+	back.z=_memState.get(terminalZ);
+	BotTrajectories::genTrajectory(current,back,_trajectory,_trajIt); // ?
+	return false;
 }
 
 bool BotController::loopManual() {

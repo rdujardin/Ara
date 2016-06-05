@@ -74,6 +74,8 @@ BallDetector::~BallDetector() {
 
 bool BallDetector::loop(Position& detection) {
 
+	detection.valid=false;
+
 	_timer->reset();
 
 	Mat input(Camera::width,Camera::height,CV_8UC3);
@@ -166,6 +168,10 @@ bool BallDetector::loop(Position& detection) {
 		detR=maxR;
 
 		if(!detections.empty()) {
+
+			if(detX<0 || detX>WORK_W || detY<0 || detY>WORK_H) detection.valid=false;
+			else detection.valid=true;
+
 			double z=_cam->focal*ballRadius/(2*((double) detR)*4*_cam->pixelSize);
 			//detection.z=z*100;
 			//cout << "u : " << detections[0].x << " / v : " << detections[0].y << " / r : " << detections[0].radius << " ### ";
@@ -175,9 +181,6 @@ bool BallDetector::loop(Position& detection) {
 			detection.y=100*((WORK_H-((double) filtered_position.at<float>(1))*4)*_cam->pixelSize*z/_cam->focal); //detY
 			
 			detection.z=100*(double) filtered_position.at<float>(2);			
-
-			if(detection.x<0 || detection.x>WORK_W || detection.y<0 || detection.y>WORK_H) detection.valid=false;
-			else detection.valid=true;
 		}
 		else detection.valid=false;
 		//OLD ELLIPSES CODE END

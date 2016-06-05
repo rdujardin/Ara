@@ -51,7 +51,12 @@ class BotController : public Adjustable {
 		void setMode(Mode mode);
 
 		bool follow(Position detection);
-		bool loopGather(Position detection);
+
+		bool gather(Position detection);
+		bool trajectory();
+		bool gatherGrab();
+		bool gatherBack();
+
 		bool loopManual();
 		bool loopRoutine();
 
@@ -64,7 +69,7 @@ class BotController : public Adjustable {
 
 		BotHardware* _hardware;
 
-		BotState _state;
+		BotState _state,_memState;
 		int _vehicleLeftSpeed, _vehicleRightSpeed;
 
 		Trajectory _trajectory;

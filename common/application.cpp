@@ -34,6 +34,7 @@ using namespace cv;
 
 Application::Application(int argc,char* argv[]) {
 	_pause=false;
+	_gatherGo=false;
 	readArgs(argc,argv);
 	_cam=new Camera(true,_optCamId);
 	if (!_cam->isOpened()) throw -1;
@@ -46,35 +47,71 @@ Application::Application(int argc,char* argv[]) {
 	while(true) {
 		int event=checkKeyboard();
 		if(!_pause) {
+			cout << "." << endl;
 			if(_mode==STARTUP) {
+				cout << "STARTUP" << endl;
 				if(!_botController->loopRoutine()) setMode(_optMode);
 			}
 			else if(_mode==FOLLOW) {
+				cout << "FOLLOW" << endl;
 				Position pos;
 				_ballDetector->loop(pos);
 				adaptPosition(pos);
-				_botController->follow(pos);
+				cout << "X " << pos.x << " ; Y " << pos.y << " ; Z " << pos.z << endl;
+				if(pos.valid) _botController->follow(pos);
 
 				if(event==EVENT_EXIT) break;
 			}
 			else if(_mode==GATHER) {
+				cout << "GATHER" << endl;
 				Position pos;
 				_ballDetector->loop(pos);
 				adaptPosition(pos);
-				_botController->loopGather(pos);
+				if(pos.valid && _gatherGo) {
+					BotState bs;
+					bs.set(cartesian,terminalX,pos.x,terminalY,pos.y,terminalZ,pos.z);
+					if(bs.checkWorkingZone()) {
+						_gatherGo=false;
+						_botController->gather(pos);
+						setMode(TRAJECTORY,GATHER_GRAB);
+					}
+				}
 				
 				if(event==EVENT_EXIT) break;
 			}
+			else if(_mode==TRAJECTORY) {
+				cout << "TRAJECTORY" << endl;
+				if(!_botController->trajectory()) setMode(_nextMode);
+				if(event==EVENT_EXIT) break;
+			}
+			else if(_mode==GATHER_GRAB) {
+				cout << "GATHER_GRAB" << endl;
+				if(!_botController->gatherGrab()) setMode(GATHER_BACK);
+				if(event==EVENT_EXIT) break;
+			}
+			else if(_mode==GATHER_BACK) {
+				cout << "GATHER_BACK" << endl;
+				_botController->gatherBack();
+				setMode(TRAJECTORY,GATHER);
+				if(event==EVENT_EXIT) break;
+			}
 			else if(_mode==MANUAL) {
+				cout << "MANUAL" << endl;
 				_botController->loopManual();
 
 				if(event==EVENT_EXIT) break;
 			}
 			else if(_mode==PRESHUTDOWN) {
+				cout << "PRESHUTDOWN" << endl;
 				if(!_botController->loopRoutine()) setMode(SHUTDOWN);
 			}
-			else { //SHUTDOWN
+			else if(_mode==SHUTDOWN) {
+				cout << "SHUTDOWN" << endl;
 				if(!_botController->loopRoutine()) break;
+			}
+			else { //NULL_MODE
+				cout << "NULLMODE" << endl;
+				if(event==EVENT_EXIT) break;
 			}
 		}
 		logs.processRepainting();
@@ -90,14 +127,23 @@ Application::~Application() {
 
 int Application::checkKeyboard() {
 	int key=waitKey(1);
+	ostringstream oss;
+	oss << key;
+	cout << "KKKKKKK " << oss.str() << endl;
 	if(key==KEY_SPACE) {
-		_pause=!_pause;
+		_pause=true;
+		return EVENT_CONTINUE;
+	}
+	else if(key==KEY_BACKSPACE) {
+		_pause=false;
 		return EVENT_CONTINUE;
 	}
 	else {
 		if(_mode==STARTUP || _mode==PRESHUTDOWN || _mode==SHUTDOWN) return EVENT_CONTINUE; 
-		else if(_mode==FOLLOW || _mode==GATHER || _mode==MANUAL) {
-			if(key==KEY_ESCAPE) {
+		else if(_mode==NULL_MODE || _mode==FOLLOW || _mode==GATHER || _mode==GATHER_BACK || _mode==TRAJECTORY || _mode==GATHER_GRAB || _mode==MANUAL) {
+			if(key==KEY_ENTER && _mode==GATHER) _gatherGo=true;
+			else if(key==KEY_ESCAPE) {
+				cout << "ESCAPE !!!!!!!!!! " << endl;
 				if(_optWithBot || _optForceWithRoutines) {
 					setMode(PRESHUTDOWN);
 					return EVENT_CONTINUE;
@@ -122,7 +168,8 @@ void Application::adaptOrientation(Position& pos) {
 	pos.z=-sin(horizAngle)*tmpY+cos(horizAngle)*pos.z;
 }
 
-void Application::setMode(Mode mode) {
+void Application::setMode(Mode mode,Mode next) {
+	_nextMode=next;
 	_mode=mode;
 	_botController->setMode(mode);
 }
@@ -160,7 +207,7 @@ void Application::readArgs(int argc,char* argv[]) {
 	_optWithBot=false;
 	_optForceWithRoutines=false;
 	_optCamId=1;
-	_optMode=FOLLOW;
+	_optMode=GATHER;
 	_optBall="green";
 
 	//Read arguments
