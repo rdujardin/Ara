@@ -61,70 +61,41 @@ void BotTrajectories::genTrajectory(Position a,Position b,Trajectory& _trajector
 
 #define __deg *180/M_PI
 #define __rad *M_PI/180
+#define rad(x) x*M_PI/180
+#define deg(x) x*180/M_PI
 #define __computed(a,x) conv(a,false,x)*180/M_PI
 #define __real(a,x) conv(a,true,x)*M_PI/180
 
+#define THETA0_SPEED 1
+#define ALPHA1_SPEED 1
+#define ALPHA2_SPEED 1
+#define ALPHA3_SPEED 2
+#define THETA3_SPEED 2
+
 void BotTrajectories::initStartUpRoutine(Trajectory& _trajectory,TrajIt& _trajIt,BotState& _state) {
 	BotState start,end;
-	#define c(a,x) conv(a,true,x*M_PI/180)
-	start.setUnsafe(angles,theta0,c(0,90),alpha1,c(1,180),alpha2,c(2,-170),alpha3,c(3,0),theta3,c(4,90));
-	end.setUnsafe(angles,theta0,c(0,90),alpha1,c(1,140),alpha2,c(2,-107),alpha3,c(3,0),theta3,c(4,0));
+	start.setUnsafe(angles,theta0,rad(ALPHA1_2_RANGE/2),alpha1,rad(ALPHA1_2_RANGE),alpha2,rad(0),alpha3,rad(90),theta3,rad(180));
+	end.setUnsafe(angles,theta0,rad(ALPHA1_2_RANGE/2),alpha1,rad(87),alpha2,rad(70),alpha3,rad(13),theta3,rad(90));
 
-	double v_al1=conv(1,false,end.get(alpha1));
-	double v_al2=conv(2,false,end.get(alpha2));
-	end.setUnsafe(angles,alpha3,conv(3,true,_terminalAbsAlpha-v_al1-v_al2));
-
-	BotState current=start;
-
-	_trajectory.clear();
-	_trajectory.push_back(current);
-
-	//Compute
+	BotState current;
+	current.setFrom(start);
 	bool finished=false;
-	//double halfElbo=end.get(alpha2)+((start.get(alpha2)-end.get(alpha2))/2);
-	double halfElbo=__computed(2,end.get(alpha2))+(__computed(2,start.get(alpha2))-__computed(2,end.get(alpha2)))/2;
 
 	while(!finished) {
-		if (waitKey(1)>=0) break;
-		//if((current.get(alpha2)<halfElbo)) {
-		if(__computed(2,current.get(alpha2))<halfElbo) {
-			double v=conv(2,false,current.get(alpha2))*180/M_PI;
-			v+=1;
-			current.setUnsafe(angles,alpha2,conv(2,true,v*M_PI/180));
-			_trajectory.push_back(current);
-		}
-		//else if(current.get(theta3)>end.get(theta3)) {
-		else if(__computed(4,current.get(theta3))>__computed(4,end.get(theta3))) {
-			double v=conv(4,false,current.get(theta3))*180/M_PI;
-			v-=3;
-			current.setUnsafe(angles,theta3,conv(4,true,v*M_PI/180));
-			_trajectory.push_back(current);
-		}
-		//else if(current.get(alpha3)>end.get(alpha3)) {
-		else if(__computed(3,current.get(alpha3))>__computed(3,end.get(alpha3))) {
-			double v=conv(3,false,current.get(alpha3))*180/M_PI;
-			v-=3;
-			current.setUnsafe(angles,alpha3,conv(3,true,v*M_PI/180));
-			_trajectory.push_back(current);
-		}
-		else {
-			//if((current.get(alpha2)<end.get(alpha2))) {
-			if(__computed(2,current.get(alpha2))<__computed(2,end.get(alpha2))) {
-				double v=conv(2,false,current.get(alpha2))*180/M_PI;
-				v+=1;
-				current.setUnsafe(angles,alpha2,conv(2,true,v*M_PI/180));
-			}
-			//if((current.get(alpha1)>end.get(alpha1))) {
-			if(__computed(1,current.get(alpha1))>__computed(1,end.get(alpha1))) {
-				double v=conv(1,false,current.get(alpha1))*180/M_PI;
-				v-=1;
-				current.setUnsafe(angles,alpha1,conv(1,true,v*M_PI/180));
-			}
-			_trajectory.push_back(current);
-		}
+		if(waitKey(1)>=0) break;
 
-		if(near(current.get(theta0),end.get(theta0)) && near(current.get(alpha1),end.get(alpha1)) && near(current.get(alpha2),end.get(alpha2)) && near(current.get(theta3),end.get(theta3))) finished=true;
+		if(current.get(alpha2)<end.get(alpha2) && !nearAng1(current,end,alpha2,rad(ALPHA2_SPEED)))
+			current.setUnsafe(angles,alpha2,current.get(alpha2)+rad(ALPHA2_SPEED));
+		else if(current.get(alpha1)>end.get(alpha1) && !nearAng1(current,end,alpha1,rad(ALPHA1_SPEED)))
+			current.setUnsafe(angles,alpha1,current.get(alpha1)-rad(ALPHA1_SPEED));
+		else if(current.get(theta3)>end.get(theta3) && !nearAng1(current,end,theta3,rad(THETA3_SPEED)))
+			current.setUnsafe(angles,theta3,current.get(theta3)-rad(THETA3_SPEED));
+		else if(current.get(alpha3)>end.get(alpha3) && !nearAng1(current,end,alpha3,rad(ALPHA3_SPEED)))
+			current.setUnsafe(angles,alpha3,current.get(alpha3)-rad(ALPHA3_SPEED));
 
+		_trajectory.push_back(current);
+		cout << current.stringify() << endl;
+		if(nearAng1(current,end,theta0,rad(THETA0_SPEED)) && nearAng1(current,end,alpha1,rad(ALPHA1_SPEED)) && nearAng1(current,end,alpha2,rad(ALPHA2_SPEED)) && nearAng1(current,end,alpha3,rad(ALPHA3_SPEED)) && nearAng1(current,end,theta3,rad(THETA3_SPEED))) finished=true;
 	}
 
 	_trajIt=_trajectory.begin();
@@ -148,76 +119,35 @@ void BotTrajectories::initShutDownRoutine(Trajectory& _trajectory,TrajIt& _trajI
 
 	_state.set(cartesian,terminalX,0,terminalY,/*35*/15,terminalZ,22);
 	BotState start,end;
-	#define c(a,x) conv(a,true,x*M_PI/180)
-	start.setUnsafe(angles,theta0,c(0,90),alpha1,c(1,140),alpha2,c(2,-107),alpha3,c(3,0),theta3,c(4,0));
-	end.setUnsafe(angles,theta0,c(0,90),alpha1,c(1,180),alpha2,c(2,-170),alpha3,c(3,0),theta3,c(4,90));
+	end.setUnsafe(angles,theta0,rad(ALPHA1_2_RANGE/2),alpha1,rad(ALPHA1_2_RANGE),alpha2,rad(0),alpha3,rad(90),theta3,rad(180));
+	start.setUnsafe(angles,theta0,rad(ALPHA1_2_RANGE/2),alpha1,rad(87),alpha2,rad(70),alpha3,rad(13),theta3,rad(90));
 
-	double v_al1=conv(1,false,start.get(alpha1));
-	double v_al2=conv(2,false,start.get(alpha2));
-	start.setUnsafe(angles,alpha3,conv(3,true,_terminalAbsAlpha-v_al1-v_al2));
-
-	BotState current=start;
-
-	_trajectory.clear();
-	_trajectory.push_back(current);
-
-	//Compute
+	BotState current;
+	current.setFrom(start);
 	bool finished=false;
-	//double halfElbo=start.get(alpha2)+((end.get(alpha2)-start.get(alpha2))/2);
-	double halfElbo=__computed(2,start.get(alpha2))+((__computed(2,end.get(alpha2))-__computed(2,start.get(alpha2)))/2);
 
 	while(!finished) {
-		if (waitKey(1)>=0) break;
-		//if(current.get(alpha1)<end.get(alpha1)) {
-		if(__computed(1,current.get(alpha1))<__computed(1,end.get(alpha1))) {
-			double v=conv(1,false,current.get(alpha1))*180/M_PI;
-			v+=1;
-			current.setUnsafe(angles,alpha1,conv(1,true,v*M_PI/180));
-			_trajectory.push_back(current);
-		}
-		//else if((current.get(alpha2)>halfElbo)) {
-		else if(__computed(2,current.get(alpha2))>halfElbo) {
-			double v=conv(2,false,current.get(alpha2))*180/M_PI;
-			v-=1;
-			current.setUnsafe(angles,alpha2,conv(2,true,v*M_PI/180));
-			_trajectory.push_back(current);
-		}
-		//else if(current.get(theta3)<end.get(theta3)) {
-		else if(__computed(4,current.get(theta3))<__computed(4,end.get(theta3))) {
-			double v=conv(4,false,current.get(theta3))*180/M_PI;
-			v+=3;
-			current.setUnsafe(angles,theta3,conv(4,true,v*M_PI/180));
-			_trajectory.push_back(current);
-		}
-		//else if(current.get(alpha3)<end.get(alpha3)) {
-		else if(__computed(3,current.get(alpha3))<__computed(3,end.get(alpha3))) {
-			double v=conv(3,false,current.get(alpha3))*180/M_PI;
-			v+=3;
-			current.setUnsafe(angles,alpha3,conv(3,true,v*M_PI/180));
-			_trajectory.push_back(current);
-		}
-		else {
-			//if((current.get(alpha2)>end.get(alpha2))) {
-			if(__computed(2,current.get(alpha2))>__computed(2,end.get(alpha2))) {
-				double v=conv(2,false,current.get(alpha2))*180/M_PI;
-				v-=1;
-				current.setUnsafe(angles,alpha2,conv(2,true,v*M_PI/180));
-			}
-			//if((current.get(alpha1)<end.get(alpha1))) {
-			if(__computed(1,current.get(alpha1))<__computed(1,end.get(alpha1))) {
-				double v=conv(1,false,current.get(alpha1))*180/M_PI;
-				v+=1;
-				current.setUnsafe(angles,alpha1,conv(1,true,v*M_PI/180));
-			}
-			_trajectory.push_back(current);
-		}
+		if(waitKey(1)>=0) break;
 
-		if(near(current.get(theta0),end.get(theta0)) && near(current.get(alpha1),end.get(alpha1)) && near(current.get(alpha2),end.get(alpha2)) && near(current.get(theta3),end.get(theta3))) finished=true;
+		if(current.get(theta3)<end.get(theta3) && !nearAng1(current,end,theta3,rad(THETA3_SPEED)))
+			current.setUnsafe(angles,theta3,current.get(theta3)+rad(THETA3_SPEED));
+		else if(current.get(alpha3)<end.get(alpha3) && !nearAng1(current,end,alpha3,rad(ALPHA3_SPEED)))
+			current.setUnsafe(angles,alpha3,current.get(alpha3)+rad(ALPHA3_SPEED));
+		else if(current.get(alpha1)<end.get(alpha1) && !nearAng1(current,end,alpha1,rad(ALPHA1_SPEED)))
+			current.setUnsafe(angles,alpha1,current.get(alpha1)+rad(ALPHA1_SPEED));
+		else if(current.get(alpha2)>end.get(alpha2) && !nearAng1(current,end,alpha2,rad(ALPHA2_SPEED)))
+			current.setUnsafe(angles,alpha2,current.get(alpha2)-rad(ALPHA2_SPEED));
+		
+		
 
+		_trajectory.push_back(current);
+		cout << current.stringify() << endl;
+		if(nearAng1(current,end,theta0,rad(THETA0_SPEED)) && nearAng1(current,end,alpha1,rad(ALPHA1_SPEED)) && nearAng1(current,end,alpha2,rad(ALPHA2_SPEED)) && nearAng1(current,end,alpha3,rad(ALPHA3_SPEED)) && nearAng1(current,end,theta3,rad(THETA3_SPEED))) finished=true;
 	}
 
 	_trajIt=_trajectory.begin();
 
+	
 }
 
 bool BotTrajectories::loopStartUpRoutine(BotState& _state,Trajectory& _trajectory,TrajIt& _trajIt) {

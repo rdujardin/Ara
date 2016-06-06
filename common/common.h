@@ -65,5 +65,8 @@ static std::queue<Position> detection;
 
 #define ALPHA1_2_RANGE 125
 
+#define nearAng1(a,b,id,t) (abs(a.get(id)-b.get(id))<=t)
+#define nearAng(a,b,t) (abs(a.get(theta0)-b.get(theta0))<=t && abs(a.get(alpha1)-b.get(alpha1))<=t && abs(a.get(alpha2)-b.get(alpha2))<=t && abs(a.get(alpha3)-b.get(alpha3))<=t && abs(a.get(theta3)-b.get(theta3))<=t)
+
 #endif
 
