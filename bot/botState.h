@@ -35,6 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <map>
 #include <sstream>
 
+#include "../common/common.h"
+
 #define angles 0
 #define cartesian 1
 
@@ -71,7 +73,7 @@ static double _terminalAbsTheta=0.01*M_PI/180;
 static double _terminalYOffset=0;
 static double _length1=29.5;
 static double _length2=30;
-static double _length3=26.5+11;
+static double _length3=26.5/*+11*/;
 static double _length3Th=_length3*cos(_terminalAbsAlpha);
 
 typedef std::vector<BotState> Trajectory;

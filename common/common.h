@@ -61,7 +61,9 @@ static std::queue<Position> detection;
 #define WORK_H 480
 
 #define neart(x,y,t) (abs(x-y)<=t)
-#define near(x,y) (abs(x-y)<=0.01)
+#define near(x,y) (abs(x-y)<=0.01*180/M_PI)
+
+#define ALPHA1_2_RANGE 125
 
 #endif
 

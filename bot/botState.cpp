@@ -49,16 +49,16 @@ double conv(unsigned int servo,bool unit,double input) {
 	//	alpha3 : 0-180, 90 dans le prolongement, (0 ??)
 
 	if(unit) {
-		if(servo==0) return input-20*M_PI/180;
+		if(servo==0) return input-(180-ALPHA1_2_RANGE)/2*M_PI/180;
 		else if(servo==4) return input+90*M_PI/180; //+90° si 0 à droite, 90°-_theta3 si 0 à gauche
-		else if(servo==1) return input-40*M_PI/180;
+		else if(servo==1) return input-(180-ALPHA1_2_RANGE)*M_PI/180;
 		else if(servo==2) return input+180*M_PI/180;
 		else return input+90*M_PI/180; //+90° si 0 en bas, 90°-_alpha3 si 0 en haut
 	}
 	else {
-		if(servo==0) return input+20*M_PI/180;
+		if(servo==0) return input+(180-ALPHA1_2_RANGE)/2*M_PI/180;
 		else if(servo==4) return input-90*M_PI/180; //-90° si 0 à droite, 90°-_theta3 si 0 à gauche
-		else if(servo==1) return input+40*M_PI/180;
+		else if(servo==1) return input+(180-ALPHA1_2_RANGE)*M_PI/180;
 		else if(servo==2) return input-180*M_PI/180;
 		else return input-90*M_PI/180; //-90° si 0 en bas, 90°-_alpha3 si 0 en haut
 	}
@@ -113,13 +113,13 @@ void BotState::setUnsafe(unsigned int type,unsigned int i1,double v1,unsigned in
 }
 
 bool BotState::check(unsigned int i) {
-	if(i==theta0) return _vals[theta0]>=0*M_PI/180 && _vals[theta0]<=140*M_PI/180;
-	else if(i==alpha1) return _vals[alpha1]>=0*M_PI/180 && _vals[alpha1]<=140*M_PI/180;
+	if(i==theta0) return _vals[theta0]>=0*M_PI/180 && _vals[theta0]<=125*M_PI/180;
+	else if(i==alpha1) return _vals[alpha1]>=0*M_PI/180 && _vals[alpha1]<=125*M_PI/180;
 	else if(i==alpha2) return _vals[alpha2]>=0*M_PI/180 && _vals[alpha2]<=180*M_PI/180;
 	else if(i==alpha3) return _vals[alpha3]>=0*M_PI/180 && _vals[alpha3]<=180*M_PI/180;
 	else if(i==theta3) return _vals[theta3]>=0*M_PI/180 && _vals[theta3]<=180*M_PI/180;
 	else if(i==terminalY) return _vals[terminalY]>0+_terminalYOffset;
-	else if(i==terminalZ) return _vals[terminalZ]>=20 && _vals[terminalZ]<45;
+	else if(i==terminalZ) return _vals[terminalZ]>=20 && _vals[terminalZ]<55;
 	else if(i==wristY) return _vals[wristY]>0;
 	else return true;
 }

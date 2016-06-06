@@ -37,8 +37,10 @@ BotController::BotController(bool withBot) : Adjustable("Bras (vue de cote)") {
 	_withBot=withBot;
 	_hardware=new BotHardware(withBot);
 
-	_state.set(cartesian,terminalX,0,terminalY,35,terminalZ,22);
-	_memState.set(cartesian,terminalX,0,terminalY,35,terminalZ,22);
+	//_state.set(cartesian,terminalX,0,terminalY,35,terminalZ,22);
+	//_memState.set(cartesian,terminalX,0,terminalY,35,terminalZ,22);
+	_state.set(cartesian,terminalX,0,terminalY,15,terminalZ,21);
+	_memState.set(cartesian,terminalX,0,terminalY,15,terminalZ,21);
 
 	_vehicleLeftSpeed=0;
 	_vehicleRightSpeed=0;
@@ -73,7 +75,7 @@ bool BotController::loopRoutine() {
 	else if(_mode==SHUTDOWN) ret=BotTrajectories::loopShutDownRoutine(_state,_trajectory,_trajIt);
 	loopAngles(true);
 	_trajIt++;
-	Timer::wait(40);
+	Timer::wait(60);
 	return ret;
 }
 
@@ -156,10 +158,11 @@ bool BotController::loopAngles(bool unsafe) {
 
 	//double angle_test(__alpha0);
 	_hardware->checkBatteryLevel();
-	if(workZoneCheck) _hardware->sendToMotors(_state);
+	if(workZoneCheck || unsafe) _hardware->sendToMotors(_state);
 	
 	return true;
 }
+
 
 void BotController::adjusted(std::string name,int val) {
 	if(_mode==MANUAL) {
