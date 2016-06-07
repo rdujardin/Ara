@@ -39,8 +39,10 @@ BotController::BotController(bool withBot) : Adjustable("Bras (vue de cote)") {
 
 	//_state.set(cartesian,terminalX,0,terminalY,35,terminalZ,22);
 	//_memState.set(cartesian,terminalX,0,terminalY,35,terminalZ,22);
-	_state.set(cartesian,terminalX,0,terminalY,15,terminalZ,21);
-	_memState.set(cartesian,terminalX,0,terminalY,15,terminalZ,21);
+	//_state.set(cartesian,terminalX,0,terminalY,15,terminalZ,21);
+	//_memState.set(cartesian,terminalX,0,terminalY,15,terminalZ,21);
+	_state.setFrom(BotState::readyPos());
+	_memState.setFrom(BotState::readyPos());
 
 	_vehicleLeftSpeed=0;
 	_vehicleRightSpeed=0;
@@ -58,6 +60,10 @@ BotController::BotController(bool withBot) : Adjustable("Bras (vue de cote)") {
 
 BotController::~BotController() {
 	delete _hardware;
+}
+
+BotState& BotController::state() {
+	return _state;
 }
 
 void BotController::setMode(Mode mode) {
@@ -110,6 +116,20 @@ bool BotController::trajectory() {
 }
 
 bool BotController::gatherGrab() {
+	Timer::wait(1000);
+	//delay(1000);
+	cout << "I'm in !!" << endl;
+	_hardware->sendInt(252);
+	_hardware->sendAngle(136);
+	Timer::wait(1000);
+	//delay(1000);
+	return false;
+}
+
+bool BotController::gatherRelease() {
+	Timer::wait(200);
+	_hardware->sendInt(252);
+	_hardware->sendAngle(90);
 	Timer::wait(200);
 	return false;
 }

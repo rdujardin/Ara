@@ -32,6 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ****************************************************************/
 #define MODE_BRAS 0
 #define MODE_TANK 1
+#define MODE_PINCE 2
+
 int mode = MODE_BRAS;
 
         //SERVOS 
@@ -39,7 +41,7 @@ int mode = MODE_BRAS;
 int i=-1;
 int y=0;
 const int nbrServos=6;                              //Nombre de servomoteurs
-const int brocheServo[nbrServos]={3,5,6,9,13,11};   //Choix des broches pour les servomoteurs 3 5 6 9 10 11
+const int brocheServo[nbrServos]={3,5,6,9,10,11};   //Choix des broches pour les servomoteurs 3 5 6 9 10 11
 int angle[nbrServos];
 const int angle0[nbrServos]={90,180,0,90,180,90}; //90 0 180 180 90
 Servo servo[nbrServos];
@@ -130,6 +132,11 @@ void loop() {
          i=0; 
          mode = MODE_TANK;
       }
+      else if(c==252) {
+        Serial.println(" ");
+        i=5;
+        mode = MODE_PINCE;
+      }
       /*if(c==65) { //MODE 1
         glowingLED(30);
       }
@@ -158,7 +165,7 @@ void loop() {
             }
          } 
          if(mode == MODE_TANK && i>=0 && i<2 /*&& voltage>6.5*/) {
-            puissance[i]=c;
+            //puissance[i]=c;
             //Serial.print("Servo numero ");
             Serial.print(i+1);
             Serial.print("=");
@@ -169,7 +176,16 @@ void loop() {
               y=0;
               i=-1; 
             }
-         }
+          }  
+          if(mode == MODE_PINCE && i==5 /*&& voltage>6.5*/) {
+            angle[i]=c;
+            //Serial.print("Servo numero ");
+            Serial.print(i+1);
+            Serial.print("=");
+            Serial.print(angle[i]);
+            Serial.print(" / ");
+            servo[i].write(angle[i]);
+          }
       }
   
   } 

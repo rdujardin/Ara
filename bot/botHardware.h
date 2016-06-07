@@ -43,11 +43,13 @@ public:
 	void sendToVehicle(int vehicleLeftSpeed,int vehicleRightSpeed);
 	void checkBatteryLevel();
 	int batteryLevel();
+	
+	void sendInt(int v);
+	void sendAngle(double angle);
 private:
 	bool _withBot;
 	int _fd;
-	void sendInt(int v);
-	void sendAngle(double angle);
+	
 	int _batteryLevel;
 };
 

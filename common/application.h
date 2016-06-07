@@ -68,6 +68,7 @@ class Application {
 		bool _optForceWithRoutines;
 		unsigned int _optCamId;
 		std::string _optBall;
+		double _optCoordCalib;
 
 		void readArgs(int argc,char* argv[]);
 		void adaptPosition(Position& pos);

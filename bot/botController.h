@@ -55,12 +55,15 @@ class BotController : public Adjustable {
 		bool gather(Position detection);
 		bool trajectory();
 		bool gatherGrab();
+		bool gatherRelease();
 		bool gatherBack();
 
 		bool loopManual();
 		bool loopRoutine();
 
 		void nextState();
+
+		BotState& state();
 		
 		virtual void adjusted(std::string name,int val);
 	//private:

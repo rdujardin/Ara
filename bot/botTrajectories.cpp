@@ -59,23 +59,23 @@ void BotTrajectories::genTrajectory(Position a,Position b,Trajectory& _trajector
 	_trajIt=_trajectory.begin();
 }
 
-#define __deg *180/M_PI
-#define __rad *M_PI/180
-#define rad(x) x*M_PI/180
-#define deg(x) x*180/M_PI
-#define __computed(a,x) conv(a,false,x)*180/M_PI
-#define __real(a,x) conv(a,true,x)*M_PI/180
+void BotTrajectories::initPreShutDownRoutine(Trajectory& _trajectory,TrajIt& _trajIt,BotState& _state) {
 
-#define THETA0_SPEED 1
-#define ALPHA1_SPEED 1
-#define ALPHA2_SPEED 1
-#define ALPHA3_SPEED 2
-#define THETA3_SPEED 2
+	Position start,end;
+	start.x=_state.get(terminalX);
+	start.y=_state.get(terminalY);
+	start.z=_state.get(terminalZ);
+	end.x=BotState::readyPos().get(terminalX);
+	end.y=BotState::readyPos().get(terminalY);
+	end.z=BotState::readyPos().get(terminalZ);
+	genTrajectory(start,end,_trajectory,_trajIt);
+
+}
 
 void BotTrajectories::initStartUpRoutine(Trajectory& _trajectory,TrajIt& _trajIt,BotState& _state) {
 	BotState start,end;
-	start.setUnsafe(angles,theta0,rad(ALPHA1_2_RANGE/2),alpha1,rad(ALPHA1_2_RANGE),alpha2,rad(0),alpha3,rad(90),theta3,rad(180));
-	end.setUnsafe(angles,theta0,rad(ALPHA1_2_RANGE/2),alpha1,rad(87),alpha2,rad(70),alpha3,rad(13),theta3,rad(90));
+	start.setFrom(BotState::offPos());
+	end.setFrom(BotState::readyPos());
 
 	BotState current;
 	current.setFrom(start);
@@ -102,25 +102,12 @@ void BotTrajectories::initStartUpRoutine(Trajectory& _trajectory,TrajIt& _trajIt
 
 }
 
-void BotTrajectories::initPreShutDownRoutine(Trajectory& _trajectory,TrajIt& _trajIt,BotState& _state) {
-
-	Position start,end;
-	start.x=_state.get(terminalX);
-	start.y=_state.get(terminalY);
-	start.z=_state.get(terminalZ);
-	end.x=0;
-	end.y=/*35*/15;
-	end.z=22;
-	genTrajectory(start,end,_trajectory,_trajIt);
-
-}
-
 void BotTrajectories::initShutDownRoutine(Trajectory& _trajectory,TrajIt& _trajIt,BotState& _state) {
 
-	_state.set(cartesian,terminalX,0,terminalY,/*35*/15,terminalZ,22);
+	_state.setFrom(BotState::readyPos());
 	BotState start,end;
-	end.setUnsafe(angles,theta0,rad(ALPHA1_2_RANGE/2),alpha1,rad(ALPHA1_2_RANGE),alpha2,rad(0),alpha3,rad(90),theta3,rad(180));
-	start.setUnsafe(angles,theta0,rad(ALPHA1_2_RANGE/2),alpha1,rad(87),alpha2,rad(70),alpha3,rad(13),theta3,rad(90));
+	end.setFrom(BotState::offPos());
+	start.setFrom(BotState::readyPos());
 
 	BotState current;
 	current.setFrom(start);

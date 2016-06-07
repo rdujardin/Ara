@@ -47,7 +47,7 @@ Application::Application(int argc,char* argv[]) {
 	while(true) {
 		int event=checkKeyboard();
 		if(!_pause) {
-			cout << "." << endl;
+			cout << "<" << _botController->state().stringify() << ">" << endl;
 			if(_mode==STARTUP) {
 				cout << "STARTUP" << endl;
 				if(!_botController->loopRoutine()) setMode(_optMode);
@@ -92,7 +92,13 @@ Application::Application(int argc,char* argv[]) {
 			else if(_mode==GATHER_BACK) {
 				cout << "GATHER_BACK" << endl;
 				_botController->gatherBack();
-				setMode(TRAJECTORY,GATHER);
+				setMode(TRAJECTORY,GATHER_RELEASE);
+				if(event==EVENT_EXIT) break;
+			}
+			else if(_mode==GATHER_RELEASE) {
+				cout << "GATHER_RELEASE" << endl;
+				_botController->gatherRelease();
+				setMode(GATHER);
 				if(event==EVENT_EXIT) break;
 			}
 			else if(_mode==MANUAL) {
@@ -140,7 +146,7 @@ int Application::checkKeyboard() {
 	}
 	else {
 		if(_mode==STARTUP || _mode==PRESHUTDOWN || _mode==SHUTDOWN) return EVENT_CONTINUE; 
-		else if(_mode==NULL_MODE || _mode==FOLLOW || _mode==GATHER || _mode==GATHER_BACK || _mode==TRAJECTORY || _mode==GATHER_GRAB || _mode==MANUAL) {
+		else if(_mode==NULL_MODE || _mode==FOLLOW || _mode==GATHER || _mode==GATHER_BACK || _mode==TRAJECTORY || _mode==GATHER_GRAB || _mode==GATHER_RELEASE || _mode==MANUAL) {
 			if(key==KEY_ENTER && _mode==GATHER) _gatherGo=true;
 			else if(key==KEY_ESCAPE) {
 				cout << "ESCAPE !!!!!!!!!! " << endl;
@@ -156,16 +162,20 @@ int Application::checkKeyboard() {
 }
 
 void Application::adaptPosition(Position& pos) {
-	pos.y+=30;
-	//adaptOrientation(pos);
+	cout << "ADAPT1 " << pos.x << " ; " << pos.y << " ; " << pos.z << endl;
+	pos.y+=offset_y_camera;
+	pos.z+=offset_z_camera+BallDetector::ballRadius/2;
+	adaptOrientation(pos);
 }
 
 void Application::adaptOrientation(Position& pos) {
-	double horizAngle=0; //°, angle de la caméra % à l'horizontale, orienté vers le haut     <<<<<<<<<<<< ANGLE HORIZONTALE CAMERA HERE
+	double horizAngle=45-atan(offset_y_camera/_optCoordCalib)*180/M_PI; //°, angle de la caméra % à l'horizontale, orienté vers le haut     <<<<<<<<<<<< ANGLE HORIZONTALE CAMERA HERE
+	cout << "angle : " << horizAngle << endl;
 	double tmpY=pos.y;
-	horizAngle=-horizAngle*M_PI/180;
+	horizAngle=horizAngle*M_PI/180;
 	pos.y=cos(horizAngle)*tmpY+sin(horizAngle)*pos.z;
 	pos.z=-sin(horizAngle)*tmpY+cos(horizAngle)*pos.z;
+	cout << "ADAPT2 " << pos.x << " ; " << pos.y << " ; " << pos.z << endl;
 }
 
 void Application::setMode(Mode mode,Mode next) {
@@ -209,6 +219,7 @@ void Application::readArgs(int argc,char* argv[]) {
 	_optCamId=1;
 	_optMode=GATHER;
 	_optBall="green";
+	_optCoordCalib=60.0;
 
 	//Read arguments
 	vector<string> args;
@@ -234,6 +245,7 @@ void Application::readArgs(int argc,char* argv[]) {
 					else if(value=="manual") _optMode=MANUAL;
 				}
 				else if(option=="ball") _optBall=value;
+				else if(option=="std") _optCoordCalib=stof(value);
 			}
 		}
 	}
