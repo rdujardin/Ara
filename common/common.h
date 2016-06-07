@@ -64,7 +64,7 @@ static std::queue<Position> detection;
 #define neart(x,y,t) (abs(x-y)<=t)
 #define near(x,y) (abs(x-y)<=0.01*180/M_PI)
 
-#define ALPHA1_2_RANGE 125
+#define ALPHA1_2_RANGE 125.0
 
 #define nearAng1(a,b,id,t) (abs(a.get(id)-b.get(id))<=t)
 #define nearAng(a,b,t) (abs(a.get(theta0)-b.get(theta0))<=t && abs(a.get(alpha1)-b.get(alpha1))<=t && abs(a.get(alpha2)-b.get(alpha2))<=t && abs(a.get(alpha3)-b.get(alpha3))<=t && abs(a.get(theta3)-b.get(theta3))<=t)
@@ -72,18 +72,18 @@ static std::queue<Position> detection;
 #define offset_y_camera 10.0
 #define offset_z_camera 10.6
 
-#define __deg *180/M_PI
-#define __rad *M_PI/180
-#define rad(x) x*M_PI/180
-#define deg(x) x*180/M_PI
-#define __computed(a,x) conv(a,false,x)*180/M_PI
-#define __real(a,x) conv(a,true,x)*M_PI/180
+#define __deg *180.0/M_PI
+#define __rad *M_PI/180.0
+#define rad(x) x*M_PI/180.0
+#define deg(x) x*180.0/M_PI
+#define __computed(a,x) conv(a,false,x)*180.0/M_PI
+#define __real(a,x) conv(a,true,x)*M_PI/180.0
 
-#define THETA0_SPEED 1
-#define ALPHA1_SPEED 1
-#define ALPHA2_SPEED 1
-#define ALPHA3_SPEED 2
-#define THETA3_SPEED 2
+#define THETA0_SPEED 1.0
+#define ALPHA1_SPEED 1.0
+#define ALPHA2_SPEED 1.0
+#define ALPHA3_SPEED 1.0//2.0
+#define THETA3_SPEED 1.0//2.0
 
 #endif
 

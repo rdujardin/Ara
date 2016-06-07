@@ -219,7 +219,7 @@ void Application::readArgs(int argc,char* argv[]) {
 	_optCamId=1;
 	_optMode=GATHER;
 	_optBall="green";
-	_optCoordCalib=60.0;
+	_optCoordCalib=20.5;
 
 	//Read arguments
 	vector<string> args;

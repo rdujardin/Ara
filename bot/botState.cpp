@@ -70,13 +70,13 @@ BotState::BotState() {
 
 BotState BotState::readyPos() {
 	BotState s;
-	s.set(angles,theta0,rad(ALPHA1_2_RANGE/2),alpha1,rad(87),alpha2,rad(70),alpha3,rad(13),theta3,rad(90));
+	s.set(angles,theta0,rad(ALPHA1_2_RANGE/2.0),alpha1,rad(87.0),alpha2,rad(70.0),alpha3,rad(13.0),theta3,rad(90.0));
 	return s;
 }
 
 BotState BotState::offPos() {
 	BotState s;
-	s.setUnsafe(angles,theta0,rad(ALPHA1_2_RANGE/2),alpha1,rad(ALPHA1_2_RANGE),alpha2,rad(0),alpha3,rad(90),theta3,rad(180));
+	s.setUnsafe(angles,theta0,rad(ALPHA1_2_RANGE/2.0),alpha1,rad(ALPHA1_2_RANGE),alpha2,rad(0.0),alpha3,rad(90.0),theta3,rad(180.0));
 	return s;
 }
 /*

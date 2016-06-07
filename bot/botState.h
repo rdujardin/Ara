@@ -76,7 +76,7 @@ static double _terminalAbsTheta=0.01*M_PI/180;
 static double _terminalYOffset=0;
 static double _length1=29.5;
 static double _length2=30;
-static double _length3=27+11;
+static double _length3=20.8+11;
 static double _length3Th=_length3*cos(_terminalAbsAlpha);
 
 typedef std::vector<BotState> Trajectory;
